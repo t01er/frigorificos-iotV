@@ -17,9 +17,9 @@ export default function Sidebar() {
 
   const hidden = hiddenByUser[user?.username] ?? [];
 
-  const menu = getSidebarOptions(user?.opciones ?? []).filter(
-    (item) => !hidden.includes(item.codigo)
-  );
+const menu = getSidebarOptions(user?.opciones ?? [])
+  .filter((item) => !hidden.includes(item.codigo))
+  .filter((item) => item.name !== "GestionNestle" && item.name !== "Gestión Nestle");
 
   const location = useLocation();
 
@@ -32,6 +32,9 @@ export default function Sidebar() {
     localStorage.setItem("sidebar-expanded", JSON.stringify(isExpanded));
   }, [isExpanded]);
 
+
+
+
   return (
     <motion.aside
       initial={{ width: isExpanded ? 288 : 70 }}
@@ -40,9 +43,8 @@ export default function Sidebar() {
       className="relative h-screen bg-[#1e187b] flex flex-col text-white shadow-2xl overflow-hidden"
     >
       <div
-        className={`pt-5 cursor-pointer flex ${
-          isExpanded ? "pl-6 justify-start" : "justify-center"
-        }`}
+        className={`pt-5 cursor-pointer flex ${isExpanded ? "pl-6 justify-start" : "justify-center"
+          }`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-1 mb-5 -mt-2">
@@ -124,15 +126,13 @@ export default function Sidebar() {
                       [item.codigo]: !prev[item.codigo],
                     }));
                   }}
-                  className={`relative flex items-center h-14 transition-colors duration-300 ${
-                    isExpanded
+                  className={`relative flex items-center h-14 transition-colors duration-300 ${isExpanded
                       ? "ml-4 rounded-l-[3rem]"
                       : "mx-auto w-14 justify-center rounded-xl"
-                  } ${
-                    isActive
+                    } ${isActive
                       ? "text-[#1e187b]"
                       : "text-[#ffffff80] hover:bg-white/5"
-                  }`}
+                    }`}
                 >
                   <Icon
                     weight="Bold"
@@ -162,24 +162,21 @@ export default function Sidebar() {
                     <motion.div
                       layoutId="activeIndicator"
                       transition={{ duration: 0.2 }}
-                      className={`absolute inset-0 bg-white z-0 ${
-                        isExpanded ? "rounded-l-[3rem]" : "rounded-xl"
-                      }`}
+                      className={`absolute inset-0 bg-white z-0 ${isExpanded ? "rounded-l-[3rem]" : "rounded-xl"
+                        }`}
                     />
                   )}
                 </button>
               ) : (
                 <NavLink
                   to={item.path}
-                  className={`relative flex items-center h-14 transition-colors duration-300 ${
-                    isExpanded
+                  className={`relative flex items-center h-14 transition-colors duration-300 ${isExpanded
                       ? "ml-4 rounded-l-[3rem]"
                       : "mx-auto w-14 justify-center rounded-xl"
-                  } ${
-                    isActive
+                    } ${isActive
                       ? "text-[#1e187b]"
                       : "text-[#ffffff80] hover:bg-white/5"
-                  }`}
+                    }`}
                 >
                   <Icon
                     weight="Bold"
@@ -197,9 +194,8 @@ export default function Sidebar() {
                     <motion.div
                       layoutId="activeIndicator"
                       transition={{ duration: 0.2 }}
-                      className={`absolute inset-0 bg-white z-0 ${
-                        isExpanded ? "rounded-l-[3rem]" : "rounded-xl"
-                      }`}
+                      className={`absolute inset-0 bg-white z-0 ${isExpanded ? "rounded-l-[3rem]" : "rounded-xl"
+                        }`}
                     />
                   )}
                 </NavLink>
@@ -222,10 +218,9 @@ export default function Sidebar() {
                           key={child.path}
                           to={child.path}
                           className={({ isActive }) =>
-                            `ml-14 mr-3 h-10 flex items-center gap-3 rounded-lg px-3 text-sm transition-colors ${
-                              isActive
-                                ? "bg-white/20 text-white"
-                                : "text-white/70 hover:bg-white/10 hover:text-white"
+                            `ml-14 mr-3 h-10 flex items-center gap-3 rounded-lg px-3 text-sm transition-colors ${isActive
+                              ? "bg-white/20 text-white"
+                              : "text-white/70 hover:bg-white/10 hover:text-white"
                             }`
                           }
                         >
