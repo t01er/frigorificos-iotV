@@ -11,8 +11,7 @@ import {
 } from "@heroui/react";
 import { useGetAlertsHistoricalQuery } from "../../features/alerts/services/alertsApi";
 import type { AlertsItem } from "../../features/alerts/services/alertsApi";
-import { StreetsMapPoint, Bell, Clapperboard } from "@solar-icons/react";
-import { useTodayDate } from "../../hooks/useTodayDate";
+import { Bell, Clapperboard } from "@solar-icons/react";
 import { useNavigate } from "react-router-dom";
 
 interface AlertDrawerProps {
@@ -42,8 +41,7 @@ const getEstadoColor = (estado: string) => {
   return map[estado?.toLowerCase()] ?? "default";
 };
 
-export default function AlertDrawer({ isOpen, onClose, onAlertClick, onAlertsRead }: AlertDrawerProps) {
-  const today = useTodayDate();
+export default function AlertDrawer({ isOpen, onClose, onAlertsRead }: AlertDrawerProps) {
   const [alerts, setAlerts] = useState<AlertsItem[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const navigate = useNavigate();
@@ -74,14 +72,6 @@ export default function AlertDrawer({ isOpen, onClose, onAlertClick, onAlertsRea
     }
   );
 
-  const handleAlertClick = (alert: AlertsItem) => {
-    if (onAlertClick) {
-      onAlertClick(alert);
-    }
-    if (onAlertsRead) {
-      onAlertsRead();
-    }
-  };
 
   useEffect(() => {
     if (data?.data) {
