@@ -142,16 +142,7 @@ export const deviceApi = apiSlice.injectEndpoints({
                 return response.data || [];
             },
         }),
-
-        getDistribuidores: builder.query<Distribuidor[], void>({
-            query: () => ({
-                url: `${API_NESTLE}/api/Consultas/listaDistribuidoresBasicos`,
-                method: "GET",
-            }),
-            transformResponse: (response: DistribuidoresResponse) => {
-                return response.data || [];
-            },
-        }),
+        
 
         getClientes: builder.query<Cliente[], string>({
             query: (termino) => ({
@@ -197,7 +188,6 @@ export const {
     useGetDeviceQuery,
     useGetContadorRegistrosPaginasQuery,
     useGetLocacionesQuery,
-    useGetDistribuidoresQuery,
     useGetClientesQuery,
     useGetTodosClientesQuery,
     useRegistrarDispositivoMutation,

@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-    useGetDistribuidoresQuery,
     useGetClientesQuery,
     useGetTodosClientesQuery,
     useRegistrarDispositivoMutation,
@@ -8,6 +7,7 @@ import {
     type Distribuidor,
     type DeviceItem
 } from '../services/deviceApi';
+import { useGetDistribuidoresQuery } from '../../dashboard/services/mapApi';
 import DynamicModal, { type FieldConfig } from '../../../components/ux/DynamicModal';
 import { Autocomplete, AutocompleteItem, Select, SelectItem, addToast } from '@heroui/react';
 

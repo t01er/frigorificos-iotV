@@ -287,7 +287,8 @@ export default function AlertsTablaV2() {
                     <div className="flex items-center gap-2">
                         <DownloadButton
                             url={DOWNLOAD_CONFIGS.alertasHistorial.url}
-                            label="Historial"
+                            label=""
+                            isIconOnly={true}
                             tooltip="Descargar Historial de Alertas (ZIP)"
                             color="primary"
                             method="POST"

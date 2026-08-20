@@ -192,6 +192,7 @@ export default function AlertsTabla() {
                     );
                 },
             },
+            { key: "alert_movimiento", label: "Movimiento", width: 130 },
             { key: "alert_dis_fechahora", label: "Fecha/Hora", width: 130 },
             { key: "alert_dis_cliente", label: "Cliente", width: 130 },
         ],
@@ -238,8 +239,9 @@ export default function AlertsTabla() {
                 headerActions={
                     <DownloadButton
                         url={DOWNLOAD_CONFIGS.alertasActivas.url}
-                        label="Alertas Activas"
-                        tooltip="Descargar"
+                        label=""
+                        isIconOnly={true}
+                        tooltip="Descargar Alertas Activas"
                         color="primary"
                         rolesPermitidos={DOWNLOAD_CONFIGS.censo.rolesPermitidos}
                     />

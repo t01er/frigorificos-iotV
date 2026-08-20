@@ -6,12 +6,13 @@ interface DownloadButtonProps {
     url: string;
     label: string;
     tooltip?: string;
-    color?: "primary" | "secondary" | "success" | "error" | "warning" | "info";
-    variant?: "text" | "outlined" | "contained";
+    color?: "primary" | "secondary" | "success" | "warning" | "default" | "danger";
+    variant?: "shadow" | "solid" | "bordered" | "light" | "flat" | "faded" | "ghost";
     size?: "small" | "medium" | "large";
     icon?: React.ReactNode;
     fileName?: string;
     method?: "GET" | "POST";
+    isIconOnly?: boolean,
     body?: any;
     rolesPermitidos?: string[];
     showIcon?: boolean;
@@ -28,14 +29,17 @@ const DownloadButton = ({
     label,
     tooltip = label,
     icon,
+    color,
     fileName,
     method = "GET",
     body,
     rolesPermitidos = [],
     showIcon = true,
+    variant,
     className = "",
     onDownloadStart,
     onDownloadComplete,
+    isIconOnly,
     onError,
     showConfirmDialog = false,
     confirmMessage = "¿Está seguro de descargar este archivo?",
@@ -99,7 +103,9 @@ const DownloadButton = ({
                 onPress={handleDownload}
                 startContent={!loading && getIcon()}
                 size="sm"
-                color="primary"
+                isIconOnly={isIconOnly}
+                variant={variant}
+                color={color}
                 disabled={loading}
                 className={className}
             >
