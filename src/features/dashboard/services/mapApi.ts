@@ -1,6 +1,6 @@
 import { apiSlice } from "../../../app/apiSlice";
 import { API_NESTLE } from "../../../config/env";
-import type { PaginacionResponse , PaginationParams } from "../../../config/types";
+import type { PaginacionResponse, PaginationParams } from "../../../config/types";
 
 export interface ApiResponse<T> {
   status: boolean;
@@ -164,6 +164,40 @@ export interface Departamento {
   conteo: number;
 }
 
+export interface CoordenadaMovimiento {
+  lat: string;
+  lng: string;
+  fechaRegistro: string;
+  fechaRegistroDis: string;
+  movCodNevera: string;
+  movDistribuidor: string;
+  movBateria: string;
+  movSignal: string;
+}
+
+export interface MovimientoData {
+  imei: string;
+  locacion: string;
+  coordenadas: CoordenadaMovimiento[];
+}
+
+export interface PuntoControl {
+  punto_control: string;
+  codigo: string;
+  latitud: string;
+  longitud: string;
+  radio: number;
+  fecha_ultima_actualizacion: string;
+}
+
+export interface MovimientosDispositivoResponse {
+  status: boolean;
+  message: string;
+  totalRegistros: number;
+  data: MovimientoData;
+  control: PuntoControl[];
+}
+
 export type NeveraResponse = ApiResponse<any[]>;
 export type TallerResponse = ApiResponse<any[]>;
 export type NeveraDetalleResponse = ApiResponse<any | null>;
@@ -295,6 +329,12 @@ export const mapApi = apiSlice.injectEndpoints({
         url: `${API_NESTLE}/api/Consultas/eventosDashboardPorDistribuidor`,
       }),
     }),
+    getMovimientosDispositivo: builder.query<MovimientosDispositivoResponse, string>({
+      query: (imei) => ({
+        url: `${API_NESTLE}/api/Consultas/movimientosDispositivo`,
+        params: { imei },
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -310,7 +350,8 @@ export const {
   useGetAlertasFallitasJasperReportQuery,
   useGetBitacoraJasperReportQuery,
   useGetEventosDashboardPorDistribuidorQuery,
-  useGetContadorRegistrosPaginasQuery
+  useGetContadorRegistrosPaginasQuery,
+  useGetMovimientosDispositivoQuery,
 } = mapApi;
 
 

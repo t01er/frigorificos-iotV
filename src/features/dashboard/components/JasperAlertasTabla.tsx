@@ -57,20 +57,8 @@ export default function JasperAlertasTabla() {
 
     const columns: CustomColumnDef<JasperReportItem>[] = useMemo(
         () => [
-            {
-                key: "codigoNevera",
-                label: "Nevera",
-                width: 200,
-                sticky: true,
-                render: (item) => (
-                    <div className="flex items-center gap-2">
-                        <div className="flex flex-col leading-tight">
-                            <span className="font-semibold text-slate-700">{item.codigoNevera}</span>
-                            <span className="text-[11px] text-slate-400">{item.iccid}</span>
-                        </div>
-                    </div>
-                ),
-            },
+            { key: "codigoNevera", label: "SMS ID", width: 130 },
+            { key: "iccid", label: "Mensaje", width: 200 },
             { key: "smsId", label: "SMS ID", width: 130 },
             { key: "messageText", label: "Mensaje", width: 200 },
             { key: "senderLogin", label: "Sender Login", width: 130 },
@@ -116,7 +104,7 @@ export default function JasperAlertasTabla() {
     }, [paginatedDevices]);
 
     return (
-        <div>         
+        <div>
             <TableComponent
                 data={devicesWithUniqueId}
                 columns={columns}

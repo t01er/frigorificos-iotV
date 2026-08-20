@@ -1,4 +1,3 @@
-// NeverasMapa.tsx
 import { useState, useEffect } from "react";
 import Map from "./Map";
 import Filters from "./Filters";

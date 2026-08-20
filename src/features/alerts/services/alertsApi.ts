@@ -18,6 +18,19 @@ export interface AlertsItem {
     alert_dis_cliente: string;
 }
 
+export interface CorreosNestleResponse {
+    status: boolean;
+    message?: string;
+    data: CorreoNestle[];
+}
+
+export interface CorreoNestle {
+    correo_id: number;
+    correo_nombre: string;
+    correo_email: string;
+    correo_telefono: string;
+    correo_status: number;
+}
 export interface AlertsFilters {
     _cliente?: string;
     _cod_nevera?: string;
@@ -126,6 +139,12 @@ export const alertsApi = apiSlice.injectEndpoints({
                 },
             }),
         }),
+        getCorreosNestle: builder.query<CorreosNestleResponse, void>({
+            query: () => ({
+                url: `${API_NESTLE}/api/Consultas/listaCorreosNestle?empresa=9`,
+                method: "GET",
+            }),
+        }),
     }),
     overrideExisting: false,
 });
@@ -135,4 +154,7 @@ export const {
     useGetAlertsHistoricalCountQuery,
     useGetAlertsHistoricalV2Query,
     useGetAlertsHistoricalCountV2Query,
+     useGetCorreosNestleQuery,
 } = alertsApi;
+
+

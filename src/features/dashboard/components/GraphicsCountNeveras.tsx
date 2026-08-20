@@ -115,7 +115,7 @@ function PieCard({
   return (
     <Card shadow="none" className={`h-full bg-white/30 backdrop-blur-md transition-all hover:shadow-md ${layout === "sidebar" ? "shadow-none" : "shadow-sm"}`}>
       <CardBody>
-        <h3 className="text-lg font-bold mb-4">{title}</h3>
+
 
         <div className={`flex flex-col md:flex-row ${layout === "sidebar" ? "items-center" : "items-center"} gap-10`}>
           <div className={`${layout === "sidebar" ? "w-40 h-40 " : "w-50 h-50"}`}>
@@ -147,10 +147,13 @@ function PieCard({
           </div>
 
           <div className="flex flex-col gap-2 flex-1">
-            <span className="text-2xl font-bold">
-              {total.toLocaleString()}
-            </span>
 
+            <div className="flex justify-between items-center ">
+              <h3 className="text-lg font-bold">{title}</h3>
+              <span className="text-2xl font-bold">
+                {total.toLocaleString()}
+              </span>
+            </div>
             {data.map((item) => (
               <div
                 key={item.name}
@@ -168,10 +171,13 @@ function PieCard({
                       backgroundColor: item.color,
                     }}
                   />
-                  <span className={`text-sm ${activeFilter === item.estadoLabel
-                    ? "font-bold text-blue-800"
-                    : "hover:underline"
-                    }`}>
+                  <span
+                    className={`text-sm ${activeFilter === item.estadoLabel ? "font-bold" : "hover:underline"
+                      }`}
+                    style={{
+                      color: item.color,
+                    }}
+                  >
                     {item.name}
                   </span>
                 </div>
@@ -193,14 +199,25 @@ export default function GraphicsCountNeveras({
   onFilterByEstado,
   onClearFilters,
 }: GraphicsCountNeverasProps) {
-  const { getDistribuidoresForApi, clearAllFilters } = useNeveraFilterContext();
-  const distribuidorParam = getDistribuidoresForApi();
+  const {
+    distribuidorFilter,
+    codNeveraFilter,
+    imeiFilter,
+    locacionFilter,
+    clearAllFilters,
+  } = useNeveraFilterContext();
   const [activeEstadoFilter, setActiveEstadoFilter] = useState<string>("");
 
-  const { data, isLoading } = useGetDashboardContadoresQuery(
-    distribuidorParam ? { distribuidor: distribuidorParam } : {},
-    { skip: false }
-  );
+  const queryParams = {
+    ...(distribuidorFilter && { distribuidor: distribuidorFilter }),
+    ...(codNeveraFilter && { cod_nevera: codNeveraFilter }),
+    ...(imeiFilter && { imei: imeiFilter }),
+    ...(locacionFilter && { locacion: locacionFilter }),
+  };
+
+  const { data, isLoading } = useGetDashboardContadoresQuery(queryParams, {
+    skip: false,
+  });
 
   const cardsClass =
     layout === "sidebar"
@@ -220,6 +237,14 @@ export default function GraphicsCountNeveras({
       onFilterByEstado(estadoLabel);
     }
   };
+
+  const hasActiveFilters = Boolean(
+    activeEstadoFilter ||
+    distribuidorFilter ||
+    codNeveraFilter ||
+    imeiFilter ||
+    locacionFilter
+  );
 
 
   const handleClearAllFilters = () => {
@@ -295,18 +320,6 @@ export default function GraphicsCountNeveras({
       color: "#FFD200",
       estadoLabel: "Desconexión por Energía",
     },
-    // {
-    //   name: "Movimiento",
-    //   value: dashboard.movimiento_FUERA_DE_ZONA,
-    //   color: "#FF5F1F",
-    //   estadoLabel: "Movimiento Fuera de Zona",
-    // },
-    // {
-    //   name: "Detenido",
-    //   value: dashboard.detenido_FUERA_DE_ZONA,
-    //   color: "#C2410C",
-    //   estadoLabel: "Detenido Fuera de Zona",
-    // },
   ];
 
   const otros = [
@@ -339,7 +352,7 @@ export default function GraphicsCountNeveras({
       value: dashboard.mtto,
       color: "#7A7A7A",
       estadoLabel: "Mantenimiento",
-    },    
+    },
     {
       name: "Nestlé",
       value: dashboard.nestle,
@@ -358,20 +371,20 @@ export default function GraphicsCountNeveras({
         <div
           className="flex justify-between items-center"
           onClick={handleClearAllFilters}
-          title={activeEstadoFilter || distribuidorParam ? "Haz clic para limpiar todos los filtros" : ""}
+          title={activeEstadoFilter ? "Haz clic para limpiar todos los filtros" : ""}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-start flex-col">
             <h3 className="text-lg font-bold">Total de Neveras</h3>
-          </div>
-
-          <div className="flex flex-col items-end">
             <button onClick={(e) => {
               e.stopPropagation();
               handleClearAllFilters();
             }}
-              className="text-xl font-bold group-hover:text-red-600 hover:underline transition-all">
+              className="text-lg font-bold group-hover:text-red-600 hover:underline transition-all">
               {total.toLocaleString()}
             </button>
+          </div>
+
+          <div className="flex flex-col items-end">
             <span className="text-xs text-gray-500 mt-1">
               Última actualización:{" "}
               {new Date(dashboard.registro_CORTE).toLocaleString()}
@@ -396,7 +409,7 @@ export default function GraphicsCountNeveras({
           activeFilter={activeEstadoFilter}
         />
         <PieCard
-          title="En Traslado / Otros"
+          title="En Traslado"
           data={otros}
           layout={layout}
           onItemClick={handleEstadoClick}

@@ -6,45 +6,67 @@ import TableComponent, {
 import { useGetAlertsHistoricalQuery, useGetAlertsHistoricalCountQuery } from "../services/alertsApi";
 import type { AlertsFilters, AlertsItem } from "../services/alertsApi";
 import { Chip, type DateValue } from "@heroui/react";
-import { LightbulbBolt, LightbulbMinimalistic } from "@solar-icons/react";
 import { useTodayDate } from "../../../hooks/useTodayDate";
+import MapModal from "../../dashboard/components/MapModal";
+import { StreetsMapPoint } from "@solar-icons/react";
+import DownloadButton from "../../../components/ux/DownloadButton";
+import { DOWNLOAD_CONFIGS } from "../../../config/downloads";
+
 
 const PAGE_SIZE_DEFAULT = 15;
 
+const formatDate = (date: DateValue | null) => {
+    if (!date) return "";
+    return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+};
+
 export default function AlertsTabla() {
-    const [filterValues, setFilterValues] = useState<AlertsFilters>({
+    const today = useTodayDate();
+    const initialDateStr = formatDate(today);
+
+    const [selectedAlert, setSelectedAlert] = useState<AlertsItem | null>(null);
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
+    const handleOpenMap = useCallback((item: AlertsItem) => {
+        setSelectedAlert(item);
+        setIsMapModalOpen(true);
+    }, []);
+
+    const initialFilters: AlertsFilters = {
         _cliente: "",
         _cod_nevera: "",
         _distribuidor: "",
         _evento: "",
-        _fecha_hora: "",
+        _fecha_hora: initialDateStr,
         _imei: "",
         _locacion: "",
         _or: "desc",
         _order: "dis_ult_conex",
         _page: 1,
         _size: PAGE_SIZE_DEFAULT,
-    });
-
-    const countFilters: AlertsFilters = {
-        _cliente: filterValues._cliente,
-        _cod_nevera: filterValues._cod_nevera,
-        _distribuidor: filterValues._distribuidor,
-        _evento: filterValues._evento,
-        _fecha_hora: filterValues._fecha_hora,
-        _imei: filterValues._imei,
-        _locacion: filterValues._locacion,
     };
+
+    const [draftFilters, setDraftFilters] = useState<AlertsFilters>(initialFilters);
+    const [appliedFilters, setAppliedFilters] = useState<AlertsFilters>(initialFilters);
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
+    const [dateValue, setDateValue] = useState<DateValue | null>(today);
 
     const [sortDescriptor, setSortDescriptor] = useState<{
         column: string;
         direction: "ascending" | "descending";
     }>({ column: "dis_ult_conex", direction: "descending" });
-    const today = useTodayDate();
-    const [dateValue, setDateValue] = useState<DateValue | null>(today);
+
+    const countFilters: AlertsFilters = {
+        _cliente: appliedFilters._cliente,
+        _cod_nevera: appliedFilters._cod_nevera,
+        _distribuidor: appliedFilters._distribuidor,
+        _evento: appliedFilters._evento,
+        _fecha_hora: appliedFilters._fecha_hora,
+        _imei: appliedFilters._imei,
+        _locacion: appliedFilters._locacion,
+    };
 
     const queryFilters: AlertsFilters = {
         ...countFilters,
@@ -55,40 +77,33 @@ export default function AlertsTabla() {
     };
 
     const { data, isLoading, isFetching } = useGetAlertsHistoricalQuery(queryFilters);
-
-
     const { data: countData, isLoading: isCountLoading } = useGetAlertsHistoricalCountQuery(countFilters);
 
     const alerts = data?.data ?? [];
     const totalRegistros = countData?.total_records ?? 0;
 
+    const handleSearch = () => {
+        setAppliedFilters(draftFilters);
+        setPage(1);
+    };
+
     const handleDateChange = useCallback((date: DateValue | null) => {
         setDateValue(date);
-        if (date) {
-            const formatted = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
-            setFilterValues((prev) => ({ ...prev, _fecha_hora: formatted }));
-        } else {
-            setFilterValues((prev) => ({ ...prev, _fecha_hora: "" }));
-        }
-        setPage(1);
+        const formatted = formatDate(date);
+        setDraftFilters((prev) => ({ ...prev, _fecha_hora: formatted }));
     }, []);
+
+    const handleClearFilters = () => {
+        setDraftFilters(initialFilters);
+        setAppliedFilters(initialFilters);
+        setDateValue(today);
+        setPage(1);
+    };
 
     const columns: CustomColumnDef<AlertsItem>[] = useMemo(
         () => [
-            {
-                key: "alert_dis_cod_nevera",
-                label: "Nevera",
-                width: 200,
-                sticky: true,
-                render: (item) => (
-                    <div className="flex items-center gap-2">
-                        <div className="flex flex-col leading-tight">
-                            <span className="font-semibold text-slate-700">{item.alert_dis_cod_nevera}</span>
-                            <span className="text-[11px] text-slate-400">{item.alert_dis_imei}</span>
-                        </div>
-                    </div>
-                ),
-            },
+            { key: "alert_dis_cod_nevera", label: "Cod. Nevera", width: 130 },
+            { key: "alert_dis_imei", label: "IMEI", width: 130 },
             { key: "alert_dis_distribuidor", label: "Distribuidor", width: 130 },
             { key: "alert_loc_nom", label: "Locación", width: 130 },
             {
@@ -96,11 +111,13 @@ export default function AlertsTabla() {
                 label: "Batería",
                 width: 140,
                 render: (item) => {
-                    const value = item.alert_dis_bateria ?? "";
-                    const pct = Number(value.replace("%", "").trim());
+                    const rawValue = item.alert_dis_bateria?.trim();
+                    if (!rawValue) return <span className="text-xs text-slate-500">N/A</span>;
+
+                    const pct = Number(rawValue.replace("%", "").trim());
 
                     if (Number.isNaN(pct)) {
-                        return <span className="text-xs text-slate-500">{value}</span>;
+                        return <span className="text-xs text-slate-500">{rawValue}</span>;
                     }
 
                     const color = pct > 50 ? "bg-green-500" : pct > 20 ? "bg-amber-500" : "bg-red-500";
@@ -123,21 +140,37 @@ export default function AlertsTabla() {
                 render: (item) => (
                     <div className="flex items-center gap-1">
                         {item.alert_dis_energia === "Conectado" ? (
-                            <span className="flex items-center gap-1 text-green-600">
-                                <LightbulbBolt weight="Bold" size={18} />
-                                <span>ON</span>
-                            </span>
+                            <span className="text-green-600 font-medium">ON</span>
                         ) : (
-                            <span className="flex items-center gap-1 text-slate-400">
-                                <LightbulbMinimalistic weight="Bold" size={18} />
-                                <span>OFF</span>
-                            </span>
+                            <span className="text-slate-400 font-medium">OFF</span>
                         )}
                     </div>
                 ),
             },
-            { key: "alert_dis_lat", label: "Latitud", width: 130 },
-            { key: "alert_dis_lon", label: "Longitud", width: 130 },
+            {
+                key: "ubicacion",
+                label: "Ubicación",
+                width: 200,
+                render: (item) => {
+                    const lat = item.alert_dis_lat;
+                    const lon = item.alert_dis_lon;
+                    const hasCoords = lat && lon;
+
+                    return (
+                        <button
+                            type="button"
+                            onClick={() => handleOpenMap(item)}
+                            className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors font-medium text-xs hover:underline group"
+                            title="Ver ubicación en el mapa"
+                        >
+                            <StreetsMapPoint className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
+                            <span>
+                                {hasCoords ? `${lat}, ${lon}` : "Ver en mapa"}
+                            </span>
+                        </button>
+                    );
+                },
+            },
             { key: "alert_dis_signal", label: "Señal", width: 130 },
             { key: "alert_dis_satelite", label: "Satélite", width: 130 },
             {
@@ -162,7 +195,7 @@ export default function AlertsTabla() {
             { key: "alert_dis_fechahora", label: "Fecha/Hora", width: 130 },
             { key: "alert_dis_cliente", label: "Cliente", width: 130 },
         ],
-        []
+        [handleOpenMap]
     );
 
     const filters: FilterFieldDef[] = [
@@ -174,24 +207,6 @@ export default function AlertsTabla() {
         { key: "_imei", type: "text", placeholder: "IMEI" },
         { key: "_locacion", type: "text", placeholder: "Locación" },
     ];
-
-    const handleClearFilters = () => {
-        setFilterValues({
-            _cliente: "",
-            _cod_nevera: "",
-            _distribuidor: "",
-            _evento: "",
-            _fecha_hora: "",
-            _imei: "",
-            _locacion: "",
-            _or: "desc",
-            _order: "dis_ult_conex",
-            _page: 1,
-            _size: PAGE_SIZE_DEFAULT,
-        });
-        setDateValue(today);
-        setPage(1);
-    };
 
     const alertsWithUniqueId = useMemo(() => {
         return alerts.map((alert, index) => ({
@@ -207,18 +222,28 @@ export default function AlertsTabla() {
                 columns={columns}
                 idField="_uniqueId"
                 filters={filters}
-                filterValues={filterValues as Record<string, string>}
+                filterValues={draftFilters as Record<string, string>}
                 onFilterChange={(key, value) => {
                     if (key === "_fecha") return;
-                    setFilterValues((prev) => ({ ...prev, [key]: value }));
-                    setPage(1);
+                    setDraftFilters((prev) => ({ ...prev, [key]: value }));
                 }}
                 onClearFilters={handleClearFilters}
+                showSearchButton={true}
+                onSearch={handleSearch}
                 sortDescriptor={sortDescriptor}
                 onSortChange={(d) => {
                     setSortDescriptor(d);
                     setPage(1);
                 }}
+                headerActions={
+                    <DownloadButton
+                        url={DOWNLOAD_CONFIGS.alertasActivas.url}
+                        label="Alertas Activas"
+                        tooltip="Descargar"
+                        color="primary"
+                        rolesPermitidos={DOWNLOAD_CONFIGS.censo.rolesPermitidos}
+                    />
+                }
                 page={page}
                 pageSize={pageSize}
                 totalRegistros={totalRegistros}
@@ -230,6 +255,21 @@ export default function AlertsTabla() {
                 dateValue={dateValue}
                 onDateChange={handleDateChange}
                 isLoading={isLoading || isFetching || isCountLoading}
+            />
+
+            <MapModal
+                isOpen={isMapModalOpen}
+                onClose={() => setIsMapModalOpen(false)}
+                nevera={
+                    selectedAlert
+                        ? {
+                            cod_nevera: selectedAlert.alert_dis_cod_nevera,
+                            imei: selectedAlert.alert_dis_imei,
+                            latitud: selectedAlert.alert_dis_lat,
+                            longitud: selectedAlert.alert_dis_lon,
+                        }
+                        : null
+                }
             />
         </div>
     );

@@ -96,7 +96,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         data: geojson,
         cluster: true,
         clusterMaxZoom: 14,
-        clusterRadius: 50,
+        clusterRadius: 100,
       });
 
       map.addLayer({
@@ -105,7 +105,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         source: "sensors",
         filter: ["has", "point_count"],
         paint: {
-          "circle-color": "#1e187b",
+          "circle-color": "#95d76a",
           "circle-radius": 18,
           "circle-opacity": 0.8,
         },
@@ -121,7 +121,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
           "text-size": 12,
         },
         paint: {
-          "text-color": "#ffffff",
+          "text-color": "black",
         },
       });
 
@@ -131,9 +131,9 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         source: "sensors",
         filter: ["!", ["has", "point_count"]],
         paint: {
-          "circle-radius": 5,
+          "circle-radius": 8,
           "circle-color": ["get", "color"],
-          "circle-stroke-width": 1,
+          "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff",
         },
       });

@@ -21,7 +21,7 @@ export const sidebarIcons: Record<number, any> = {
   1: Widget5,
   2: Settings,
   3: Buildings,
-  4: SsdSquare,
+  4: Cpu,
   5: PieChart2,
   6: FileText,
   7: Bell,
@@ -39,7 +39,7 @@ export const sidebarIcons: Record<number, any> = {
 
 export const getSidebarOptions = (opciones: any[]) => {
   return opciones.map((item) => ({
-    name: item.nombre,
+    name: item.nombre?.toLowerCase() === "sensores" ? "Dispositivos" : item.nombre,
     path: item.ruta === "escritorio" ? "/dashboard" : `/${item.ruta}`,
     icon: sidebarIcons[item.codigo] ?? Explicit,
     codigo: item.codigo,
@@ -47,22 +47,22 @@ export const getSidebarOptions = (opciones: any[]) => {
     children:
       item.codigo === 18
         ? [
-          {
-            name: "Dashboard",
-            path: "/gestionnestle/dashboard",
-            icon: Chart,
-          },
-          {
-            name: "Neveras",
-            path: "/gestionnestle/neveras",
-            icon: SsdSquare,
-          },
-          {
-            name: "Jasper",
-            path: "/gestionnestle/jasper",
-            icon: FileText,
-          },
-        ]
+            {
+              name: "Dashboard",
+              path: "/dashboard",
+              icon: Chart,
+            },
+            {
+              name: "Neveras",
+              path: "/dashboard/neveras",
+              icon: SsdSquare,
+            },
+            {
+              name: "Jasper",
+              path: "/dashboard/jasper",
+              icon: FileText,
+            },
+          ]
         : undefined,
   }));
 };

@@ -272,7 +272,7 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
     const regionesPequenas = regionesOrdenadas.slice(0, -1);
     const regionGrande = regionesOrdenadas[regionesOrdenadas.length - 1];
     return (
-        <div className="flex flex-col gap-6 py-4">
+        <div className="flex flex-col gap-6 ">
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
 
@@ -281,22 +281,30 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                     if (!regionData) return null;
 
                     const chartData = processDataForChart(regionData);
-                    const distribuidoresCount = Object.keys(regionData).length;
 
+                    const totalNeveras = chartData.reduce((acc, item) => {
+                        const sumaDistribuidor = ESTADOS_PERMITIDOS.reduce((sum, estado) => {
+                            const label = ESTADO_LABELS[estado];
+                            return sum + (Number(item[label]) || 0);
+                        }, 0);
+                        return acc + sumaDistribuidor;
+                    }, 0);
+
+                    const distribuidoresCount = Object.keys(regionData).length;
                     const chartHeight = Math.max(250, distribuidoresCount * 40);
 
                     return (
                         <Card
                             key={region}
                             shadow="none"
-                            className="bg-white hover:shadow-md transition-shadow h-full min-h-100"
+                            className="bg-white h-full min-h-100"
                         >
                             <CardBody className="flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-lg font-bold text-gray-800">{region}</h3>
-                                        <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                                            {distribuidoresCount} dist.
+                                        <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                                            {totalNeveras} neveras
                                         </span>
                                     </div>
 
@@ -370,6 +378,15 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                 {regionGrande && (() => {
                     const regionData = data.data[0].regiones[regionGrande];
                     const chartData = processDataForChart(regionData);
+
+                    const totalNeveras = chartData.reduce((acc, item) => {
+                        const sumaDistribuidor = ESTADOS_PERMITIDOS.reduce((sum, estado) => {
+                            const label = ESTADO_LABELS[estado];
+                            return sum + (Number(item[label]) || 0);
+                        }, 0);
+                        return acc + sumaDistribuidor;
+                    }, 0);
+
                     const distribuidoresCount = Object.keys(regionData).length;
                     const columnas = dividirEnColumnas(chartData);
                     const tieneMultiplesColumnas = columnas.length > 1;
@@ -378,10 +395,12 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                         return Math.max(220, data.length * 30);
                     };
 
+                    const limpiarNombre = (nombre: string) => nombre.replace(/friohielos\s*/gi, "").trim();
+
                     return (
                         <div className="col-span-1 md:col-span-2 xl:col-span-3 h-full">
                             <Card shadow="none" className="bg-white h-full">
-                                <CardBody className="flex flex-col justify-between h-full gap-4">
+                                <CardBody className="flex flex-col justify-start h-full gap-10">
 
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
                                         <div className="flex items-center gap-3">
@@ -389,14 +408,14 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                                                 {regionGrande}
                                             </h3>
                                             <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
-                                                {distribuidoresCount} distribuidores
+                                                {totalNeveras} neveras
                                             </span>
                                         </div>
 
                                         <div className="flex items-center gap-3">
                                             {activeBar?.region === regionGrande && (
                                                 <div className="px-2.5 py-1 bg-blue-50 rounded-lg text-xs text-blue-700 flex items-center gap-2">
-                                                    <span>Filtrando: <strong>{activeBar.distribuidor}</strong></span>
+                                                    <span>Filtrando: <strong>{limpiarNombre(activeBar.distribuidor)}</strong></span>
                                                     <button
                                                         onClick={handleClearLocalFilter}
                                                         className="text-blue-500 hover:text-blue-700 underline font-semibold"
@@ -404,12 +423,7 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                                                         Limpiar
                                                     </button>
                                                 </div>
-                                            )}
-                                            {tieneMultiplesColumnas && (
-                                                <span className="text-[10px] text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-semibold">
-                                                    {columnas.length} columnas
-                                                </span>
-                                            )}
+                                            )}                                            
                                         </div>
                                     </div>
 
@@ -443,6 +457,7 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                                                         <YAxis
                                                             type="category"
                                                             dataKey="distribuidor"
+                                                            tickFormatter={limpiarNombre}
                                                             tick={{
                                                                 fontSize: 9,
                                                                 fontWeight: 600,

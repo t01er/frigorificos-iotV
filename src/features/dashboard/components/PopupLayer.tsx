@@ -1,6 +1,6 @@
 import { Card, CardBody, Spinner } from "@heroui/react";
 import { useGetNeveraDetalleQuery } from "../services/mapApi";
-import { UserRounded, BatteryFull, ClockCircle, CheckCircle, DangerTriangle, Globus, ShockAbsorber, WalkingRound, MapArrowUp, FaceScanSquare } from "@solar-icons/react"
+import { UserRounded, BatteryFull, ClockCircle, CheckCircle, DangerTriangle, Globus, ShockAbsorber, WalkingRound, MapArrowUp, FaceScanSquare, Bolt, MapPoint, Ticket, Bus, Fridge } from "@solar-icons/react"
 
 interface Props {
   codigo: string;
@@ -93,9 +93,7 @@ export default function PopupLayer({ codigo }: Props) {
             {nevera.razon_social && (
               <Info label="Razón Social" value={nevera.razon_social} icon={<UserRounded />} />
             )}
-            {nevera.codigo_cliente && (
-              <Info label="Código Cliente" value={nevera.codigo_cliente} icon={<FaceScanSquare />} />
-            )}
+            
             {nevera.vendedor && (
               <Info label="Vendedor" value={nevera.vendedor} icon={<FaceScanSquare />} />
             )}
@@ -103,22 +101,31 @@ export default function PopupLayer({ codigo }: Props) {
               <Info label="Mesa" value={nevera.mesa} icon={<UserRounded />} />
             )}
             {nevera.distribuidor && (
-              <Info label="Distribuidor" value={nevera.distribuidor} icon={<FaceScanSquare />} />
+              <Info label="Distribuidor" value={nevera.distribuidor} icon={<Bus />} />
             )}
-            {nevera.codigo_nevera && (
-              <Info label="Código Nevera" value={nevera.codigo_nevera} icon={<UserRounded />} bold />
+            {nevera.cod_nevera && (
+              <Info label="Código Nevera" value={nevera.cod_nevera} icon={<Fridge />} bold />
+            )}
+            {nevera.cod_cliente && (
+              <Info label="Código Cliente" value={nevera.cod_cliente} icon={<FaceScanSquare />} />
             )}
             {nevera.ubicacion && (
-              <Info label="Ubicación" value={nevera.ubicacion} icon={<MapArrowUp />} />
+              <Info label="Ubicación" value={nevera.ubicacion} icon={<MapPoint />} />
             )}
             {nevera.bateria && (
               <Info label="Batería" value={`${nevera.bateria}`} icon={<BatteryFull />} />
+            )}           
+            {nevera.energia && (
+              <Info label="energia" value={`${nevera.energia}`} icon={<Bolt />} />
             )}
-            {nevera.ultima_conexion && (
-              <Info label="Última Conexión" value={nevera.ultima_conexion} icon={<ClockCircle />} />
+            {nevera.ultima_transmision && (
+              <Info label="Última Transmisión" value={nevera.ultima_transmision} icon={<ClockCircle />} />
             )}
             {nevera.dia_visita && (
               <Info label="Dia de Visita" value={nevera.dia_visita} icon={<ClockCircle />} />
+            )}
+            {nevera.numero_ticket_mtto && (
+              <Info label="Numeor de Ticket" value={nevera.numero_ticket_mtto} icon={<Ticket />} />
             )}
             {nevera.status && (
               <Info
@@ -149,3 +156,14 @@ export default function PopupLayer({ codigo }: Props) {
     </Card>
   );
 }
+
+//  "cod_nevera": "22A0469409",
+//         "imei": "860879070699869",
+//         "distribuidor": "KALLPA",
+//         "ubicacion": "Lat. -11.839070 Long. -76.377405",
+//         "bateria": "75%",
+//         "cod_cliente": "079001017517001",
+//         "energia": "Conectado",
+//         "ultima_transmision": "2026-08-17 21:58:39",
+//         "status": "Operativo - Cartera",
+//         "numero_ticket_mtto": "0"

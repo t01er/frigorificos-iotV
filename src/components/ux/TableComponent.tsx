@@ -21,7 +21,7 @@ export interface ColumnGroupDef {
 
 export interface FilterFieldDef {
   key: string;
-  type: "text" | "select" | "dateRange" | "date";
+  type: "text" | "select" | "dateRange" | "date" | "startDate" | "endDate";
   placeholder?: string;
   options?: { value: string; label: string }[];
 }
@@ -53,9 +53,14 @@ export interface CustomTableProps<T extends Record<string, any>> {
 
   isLoading?: boolean;
   maxBodyHeight?: string;
-
+  startDateValue?: DateValue | null;
+  onStartDateChange?: (date: DateValue | null) => void;
+  endDateValue?: DateValue | null;
+  onEndDateChange?: (date: DateValue | null) => void;
   dateRangeValue?: RangeValue<DateValue> | null;
   onDateRangeChange?: (range: RangeValue<DateValue> | null) => void;
+  showSearchButton?: boolean;
+  onSearch?: () => void;
 }
 
 const GROUP_ROW_HEIGHT = 34;
@@ -84,6 +89,12 @@ export default function TableComponent<T extends Record<string, any>>({
   onDateRangeChange,
   dateValue,
   onDateChange,
+  startDateValue,
+  onStartDateChange,
+  endDateValue,
+  onEndDateChange,
+  showSearchButton = false,
+  onSearch,
 }: CustomTableProps<T>) {
   const totalPages = Math.max(1, Math.ceil(totalRegistros / pageSize));
 
@@ -112,9 +123,9 @@ export default function TableComponent<T extends Record<string, any>>({
 
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 w-full max-w-full flex flex-col">
+    <div className="bg-white rounded-2xl px-3 w-full max-w-full flex flex-col">
       {(filters.length > 0 || headerActions || onClearFilters) && (
-        <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex flex-wrap items-center gap-2 py-3 border-b border-slate-100 bg-slate-50/50">
           {filters.map((f) => {
             if (f.type === "select") {
               return (
@@ -166,12 +177,41 @@ export default function TableComponent<T extends Record<string, any>>({
                 />
               );
             }
+            if (f.type === "startDate") {
+              return (
+                <DatePicker
+                  key={f.key}
+                  size="md"
+                  radius="md"
+                  className="w-52"
+                  aria-label={f.placeholder ?? "Fecha Inicio"}
+                  value={startDateValue as any}
+                  onChange={onStartDateChange as any}
+                  granularity="day"
+                />
+              );
+            }
+
+            if (f.type === "endDate") {
+              return (
+                <DatePicker
+                  key={f.key}
+                  size="md"
+                  radius="md"
+                  className="w-52"
+                  aria-label={f.placeholder ?? "Fecha Fin"}
+                  value={endDateValue as any}
+                  onChange={onEndDateChange as any}
+                  granularity="day"
+                />
+              );
+            }
             return (
               <Input
                 key={f.key}
                 size="md"
-                radius="md"
-                className="w-50"
+                radius="md"             
+                className="w-40"
                 placeholder={f.placeholder ?? f.key}
                 startContent={<Magnifer size={14} className="text-default-400" />}
                 value={filterValues[f.key] ?? ""}
@@ -179,7 +219,17 @@ export default function TableComponent<T extends Record<string, any>>({
               />
             );
           })}
-
+          {showSearchButton && (
+            <Button
+              size="sm"
+              color="primary"
+              variant="solid"
+              startContent={<Magnifer size={16} />}
+              onPress={onSearch}
+            >
+              Buscar
+            </Button>
+          )}
           {onClearFilters && (
             <Button size="sm" color="danger" variant="flat" onPress={onClearFilters}>
               Limpiar
@@ -207,7 +257,7 @@ export default function TableComponent<T extends Record<string, any>>({
                       key={`${group.label}-${idx}`}
                       colSpan={groupCols.length}
                       style={{ width: groupWidth, minWidth: groupWidth, height: GROUP_ROW_HEIGHT }}
-                      className={`sticky top-0 bg-slate-100 text-slate-500 text-[11px] font-bold uppercase tracking-wide text-center border-b border-slate-200 ${group.noRightBorder ? "" : "border-r"
+                      className={`sticky top-0 bg-slate-100 text-slate-500 text-[11px] font-bold  tracking-wide text-center border-b border-slate-200 ${group.noRightBorder ? "" : "border-r"
                         } ${isSticky ? "z-30 left-0" : "z-20"}`}
                     >
                       {group.label}
@@ -230,7 +280,7 @@ export default function TableComponent<T extends Record<string, any>>({
                     top: columnGroups?.length ? GROUP_ROW_HEIGHT : 0,
                     ...(col.sticky ? { left: stickyOffsets[col.key] } : {}),
                   }}
-                  className={`sticky bg-white text-slate-400 font-bold uppercase text-[11px] tracking-wide border-b border-slate-100 px-3 py-2 whitespace-nowrap select-none ${col.sticky ? "z-30 shadow-[1px_0_0_0_rgba(0,0,0,0.06)]" : "z-20"
+                  className={`sticky bg-white text-slate-400 font-bold text-[11px] tracking-wide border-b border-slate-100 px-3 py-2 whitespace-nowrap select-none ${col.sticky ? "z-30 shadow-[1px_0_0_0_rgba(0,0,0,0.06)]" : "z-20"
                     } ${col.sortable !== false ? "cursor-pointer hover:text-slate-600" : ""} ${col.align === "center"
                       ? "text-center"
                       : col.align === "end"

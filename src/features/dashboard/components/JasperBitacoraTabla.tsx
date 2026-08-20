@@ -21,7 +21,6 @@ export default function JasperBitacoraTabla() {
         direction: "ascending" | "descending";
     }>({ column: "dateSent", direction: "descending" });
 
-    // Traer todos los datos para paginación frontend
     const { data, isLoading, isFetching } = useGetBitacoraJasperReportQuery({
         cod_nevera: filterValues.cod_nevera,
         page: 1,
@@ -30,7 +29,6 @@ export default function JasperBitacoraTabla() {
 
     const allDevices = data?.data ?? [];
 
-    // ✅ ORDENAR por frontend
     const sortedDevices = useMemo(() => {
         return [...allDevices].sort((a, b) => {
             const col = sortDescriptor.column as keyof JasperReportItem;
@@ -43,7 +41,6 @@ export default function JasperBitacoraTabla() {
         });
     }, [allDevices, sortDescriptor]);
 
-    // ✅ PAGINAR por frontend
     const totalRegistros = sortedDevices.length;
 
     const paginatedDevices = useMemo(() => {
@@ -57,21 +54,9 @@ export default function JasperBitacoraTabla() {
     };
 
     const columns: CustomColumnDef<JasperReportItem>[] = useMemo(
-        () => [
-            {
-                key: "codigoNevera",
-                label: "Nevera",
-                width: 200,
-                sticky: true,
-                render: (item) => (
-                    <div className="flex items-center gap-2">
-                        <div className="flex flex-col leading-tight">
-                            <span className="font-semibold text-slate-700">{item.codigoNevera}</span>
-                            <span className="text-[11px] text-slate-400">{item.iccid}</span>
-                        </div>
-                    </div>
-                ),
-            },
+        () => [           
+            { key: "codigoNevera", label: "SMS ID", width: 130 },
+            { key: "iccid", label: "Mensaje", width: 200 },
             { key: "smsId", label: "SMS ID", width: 130 },
             { key: "messageText", label: "Mensaje", width: 200 },
             { key: "senderLogin", label: "Sender Login", width: 130 },

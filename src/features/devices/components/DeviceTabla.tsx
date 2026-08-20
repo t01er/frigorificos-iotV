@@ -1,12 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import TableComponent, {
     type CustomColumnDef,
     type FilterFieldDef,
 } from "../../../components/ux/TableComponent";
 import { useGetDeviceQuery, useGetContadorRegistrosPaginasQuery } from "../services/deviceApi";
 import type { DeviceItem } from "../services/deviceApi";
-import {  Chip } from "@heroui/react";
-import { LightbulbBolt, LightbulbMinimalistic } from "@solar-icons/react";
+import { Chip, Button } from "@heroui/react";
+import ModalDispositivoNuevo from "./ModalDispositivoNuevo";
+import { PenNewRound } from "@solar-icons/react";
 
 const PAGE_SIZE_DEFAULT = 15;
 
@@ -23,7 +24,13 @@ export default function DeviceTabla() {
         direction: "ascending" | "descending";
     }>({ column: "dis_ult_conex", direction: "descending" });
 
-    const { data, isLoading, isFetching } = useGetDeviceQuery({
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [reloadData, setReloadData] = useState(false);
+    // Estados para edición
+    const [editingDevice, setEditingDevice] = useState<DeviceItem | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+
+    const { data, isLoading, isFetching, refetch } = useGetDeviceQuery({
         _cod_nevera: filterValues.cod_nevera,
         _page: page,
         _size: pageSize,
@@ -31,31 +38,56 @@ export default function DeviceTabla() {
 
     const devices = data?.data ?? [];
 
-      const { data: paginacionData, isLoading: isLoadingPaginacion } = useGetContadorRegistrosPaginasQuery({
-          _cod_nevera: filterValues.cod_nevera,
-          _page: page,
-          _size: pageSize,
-      });
+    const { data: paginacionData, isLoading: isLoadingPaginacion } = useGetContadorRegistrosPaginasQuery({
+        _cod_nevera: filterValues.cod_nevera,
+        _page: page,
+        _size: pageSize,
+    });
+
+    const handleReload = useCallback(() => {
+        if (reloadData) {
+            refetch();
+            setReloadData(false);
+        }
+    }, [reloadData, refetch]);
+
+    useState(() => {
+        handleReload();
+    });
+
+    // Abrir modal para nuevo dispositivo
+    const handleOpenModal = useCallback(() => {
+        setIsEditing(false);
+        setEditingDevice(null);
+        setIsModalOpen(true);
+    }, []);
+
+    // Abrir modal para editar dispositivo
+    const handleEditDevice = useCallback((device: DeviceItem) => {
+        setEditingDevice(device);
+        setIsEditing(true);
+        setIsModalOpen(true);
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        setIsModalOpen(false);
+        setEditingDevice(null);
+        setIsEditing(false);
+    }, []);
+
+    const handleModalOpenChange = useCallback((isOpen: boolean) => {
+        setIsModalOpen(isOpen);
+        if (!isOpen) {
+            setEditingDevice(null);
+            setIsEditing(false);
+        }
+    }, []);
 
     const columns: CustomColumnDef<DeviceItem>[] = useMemo(
         () => [
-            {
-                key: "dis_cod_nevera",
-                label: "Nevera",
-                width: 200,
-                sticky: true,
-                render: (item) => (
-                    <div className="flex items-center gap-2">                      
-                        <div className="flex flex-col leading-tight">
-                            <span className="font-semibold text-slate-700">{item.dis_cod_nevera}</span>
-                            <span className="text-[11px] text-slate-400">{item.dis_imei}</span>
-                        </div>
-                    </div>
-                ),
-            },
-
+            { key: "dis_cod_nevera", label: "Cod Nevera", width: 130 },
+            { key: "dis_imei", label: "IMEI", width: 130 },
             { key: "dis_distribuidor", label: "Distribuidor", width: 130 },
-
             { key: "dis_loc_nom", label: "Locación", width: 130 },
             {
                 key: "dis_bateria",
@@ -88,7 +120,6 @@ export default function DeviceTabla() {
                                     style={{ width: `${pct}%` }}
                                 />
                             </div>
-
                             <span className="text-xs text-slate-500">
                                 {pct}%
                             </span>
@@ -105,12 +136,10 @@ export default function DeviceTabla() {
                     <div className="flex items-center gap-1">
                         {item.dis_energia === "Conectado" ? (
                             <span className="flex items-center gap-1 text-amber-600">
-                                <LightbulbBolt weight="Bold" size={18} />
                                 <span>ON</span>
                             </span>
                         ) : (
                             <span className="flex items-center gap-1 text-slate-400">
-                                <LightbulbMinimalistic weight="Bold"  size={18} />
                                 <span>OFF</span>
                             </span>
                         )}
@@ -121,7 +150,7 @@ export default function DeviceTabla() {
             { key: "dis_longitud", label: "Longitud", width: 130 },
             { key: "dis_geozona", label: "Geozona", width: 130 },
             { key: "dis_movimiento", label: "Movimiento", width: 130 },
-            { key: "dis_iccid", label: "ICCID", width: 130, },
+            { key: "dis_iccid", label: "ICCID", width: 130 },
             {
                 key: "dis_estado",
                 label: "Estado",
@@ -143,49 +172,87 @@ export default function DeviceTabla() {
             },
             { key: "dis_version", label: "Versión", width: 130 },
             { key: "dis_cliente", label: "Cliente", width: 130 },
-
-            // { key: "dis_ubigeo", label: "Ubigeo ", width: 130 },
+            {
+                key: "acciones",
+                label: "Acciones",
+                width: 100,
+                align: "center",
+                render: (item) => (
+                    <Button
+                        size="sm"
+                        variant="light"
+                        color="primary"
+                        onPress={() => handleEditDevice(item)}
+                        startContent={
+                            <PenNewRound size={17} />
+                        }
+                    >
+                        Editar
+                    </Button>
+                ),
+            },
         ],
-        []
+        [handleEditDevice]
     );
-
-
 
     const filters: FilterFieldDef[] = [
         { key: "cod_nevera", type: "text", placeholder: "Cod Nevera" },
     ];
-  const totalRegistros = paginacionData?.total_records ?? 0;
+
+    const totalRegistros = paginacionData?.total_records ?? 0;
+
     return (
-        <TableComponent
-            data={devices}
-            columns={columns}
-            idField="dis_id"
-            filters={filters}
-            filterValues={filterValues}
-            onFilterChange={(key, value) => {
-                setFilterValues((prev) => ({ ...prev, [key]: value }));
-                setPage(1);
-            }}
-            onClearFilters={() => {
-                setFilterValues({
-                    cod_nevera: "",
-                });
-                setPage(1);
-            }}
-            sortDescriptor={sortDescriptor}
-            onSortChange={(d) => {
-                setSortDescriptor(d);
-                setPage(1);
-            }}
-            page={page}
-            pageSize={pageSize}
-            totalRegistros={totalRegistros}
-            onPageChange={setPage}
-            onPageSizeChange={(size) => {
-                setPageSize(size);
-                setPage(1);
-            }}
-            isLoading={isLoading || isFetching || isLoadingPaginacion}
-        />
+        <>
+            <TableComponent
+                data={devices}
+                columns={columns}
+                idField="dis_id"
+                filters={filters}
+                filterValues={filterValues}
+                headerActions={
+                    <Button
+                        color="primary"
+                        size="sm"
+                        onPress={handleOpenModal}
+                        startContent={<span>+</span>}
+                    >
+                        Nuevo Dispositivo
+                    </Button>
+                }
+                onFilterChange={(key, value) => {
+                    setFilterValues((prev) => ({ ...prev, [key]: value }));
+                    setPage(1);
+                }}
+                onClearFilters={() => {
+                    setFilterValues({
+                        cod_nevera: "",
+                    });
+                    setPage(1);
+                }}
+                sortDescriptor={sortDescriptor}
+                onSortChange={(d) => {
+                    setSortDescriptor(d);
+                    setPage(1);
+                }}
+                page={page}
+                pageSize={pageSize}
+                totalRegistros={totalRegistros}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setPage(1);
+                }}
+                isLoading={isLoading || isFetching || isLoadingPaginacion}
+            />
+
+            <ModalDispositivoNuevo
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onOpenChange={handleModalOpenChange}
+                setReloadData={setReloadData}
+                editingDevice={editingDevice}
+                isEditing={isEditing}
+            />
+        </>
     );
 }

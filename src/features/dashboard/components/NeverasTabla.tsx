@@ -1,5 +1,4 @@
-// NeverasTabla.tsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import TableComponent, {
     type CustomColumnDef,
     type ColumnGroupDef,
@@ -9,6 +8,10 @@ import { useGetNeverasDashboardQuery, useGetContadorRegistrosPaginasQuery } from
 import type { NeveraDashboardItem } from "../services/mapApi";
 import { ESTADO_OPTIONS_TABLE, ESTADOS_NEVERA } from "../services/estadoNeveraConstants";
 import { useNeveraFilterContext } from "../contexts/NeveraFilterContext";
+import MapModal from "../../dashboard/components/MapModal";
+import RecorridoMapModal from "../../dashboard/components/RecorridoMapModal";
+import DownloadButton from "../../../components/ux/DownloadButton";
+import { DOWNLOAD_CONFIGS } from "../../../config/downloads";
 
 const PAGE_SIZE_DEFAULT = 15;
 
@@ -23,18 +26,53 @@ export default function NeverasTabla({
 }: NeverasTablaProps) {
     const {
         distribuidorFilter,
+        codNeveraFilter,
+        imeiFilter,
+        locacionFilter,
         estadoFilter,
         setDistribuidorFilter,
-        setEstadoFilter
+        setCodNeveraFilter,
+        setImeiFilter,
+        setLocacionFilter,
+        setEstadoFilter,
+        clearAllFilters
     } = useNeveraFilterContext();
 
+    const [selectedNevera, setSelectedNevera] = useState<NeveraDashboardItem | null>(null);
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
+    const [selectedImei, setSelectedImei] = useState<string | null>(null);
+    const [isRecorridoModalOpen, setIsRecorridoModalOpen] = useState(false);
+
+    const handleOpenMap = useCallback((item: NeveraDashboardItem) => {
+        setSelectedNevera(item);
+        setIsMapModalOpen(true);
+    }, []);
+
+    const handleOpenRecorrido = useCallback((imei: string) => {
+        setSelectedImei(imei);
+        setIsRecorridoModalOpen(true);
+    }, []);
+
     const [filterValues, setFilterValues] = useState<Record<string, string>>({
-        cod_nevera: "",
-        imei: "",
-        locacion: "",
+        cod_nevera: codNeveraFilter || "",
+        imei: imeiFilter || "",
+        locacion: locacionFilter || "",
         distribuidor: distribuidorFilter || "",
         estado: "",
     });
+
+    useEffect(() => {
+        setFilterValues(prev => ({
+            ...prev,
+            cod_nevera: codNeveraFilter,
+            imei: imeiFilter,
+            locacion: locacionFilter,
+            distribuidor: distribuidorFilter
+        }));
+        setPage(1);
+    }, [codNeveraFilter, imeiFilter, locacionFilter, distribuidorFilter]);
+
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
     const [sortDescriptor, setSortDescriptor] = useState<{
@@ -42,7 +80,6 @@ export default function NeverasTabla({
         direction: "ascending" | "descending";
     }>({ column: "dis_ult_conex", direction: "descending" });
 
-    
     const queryFilters = {
         cod_nevera: filterValues.cod_nevera,
         imei: filterValues.imei,
@@ -107,9 +144,10 @@ export default function NeverasTabla({
         setFilterValues((prev) => ({ ...prev, [key]: value }));
         setPage(1);
 
-        if (key === "distribuidor") {
-            setDistribuidorFilter(value);
-        }
+        if (key === "cod_nevera") setCodNeveraFilter(value);
+        if (key === "imei") setImeiFilter(value);
+        if (key === "locacion") setLocacionFilter(value);
+        if (key === "distribuidor") setDistribuidorFilter(value);
 
         if (key === "estado") {
             setEstadoFilter(value);
@@ -124,13 +162,58 @@ export default function NeverasTabla({
     const columns: CustomColumnDef<NeveraDashboardItem>[] = useMemo(
         () => [
             { key: "dis_cod_nevera", label: "Código Nevera", width: 130, sticky: true },
-            { key: "dis_imei", label: "IMEI", width: 150, sticky: true },
+            {
+                key: "dis_imei",
+                label: "IMEI",
+                width: 150,
+                sticky: true,
+                render: (item) => (
+                    <button
+                        type="button"
+                        onClick={() => handleOpenRecorrido(item.dis_imei)}
+                        className="text-blue-600 underline font-medium hover:text-blue-800 transition-colors"
+                        title="Ver recorrido del dispositivo"
+                    >
+                        {item.dis_imei}
+                    </button>
+                ),
+            },
             { key: "loc_nombre", label: "Locación", width: 150 },
             { key: "dis_distribuidor", label: "Distribuidor", width: 130 },
             { key: "dis_sincronizado", label: "Sincronizado", width: 120 },
-            { key: "dis_ult_conex", label: "Última Conexión", width: 150 },
-            { key: "dis_latitud_actual", label: "Latitud Actual", width: 110 },
-            { key: "dis_longitud_actual", label: "Longitud Actual", width: 110 },
+
+            { key: "dis_ult_conex", label: "Última Transmisión", width: 150 },
+
+            {
+                key: "dis_latitud_actual",
+                label: "Latitud",
+                width: 130,
+                render: (item) => (
+                    <button
+                        type="button"
+                        onClick={() => handleOpenMap(item)}
+                        className="text-blue-600 underline font-medium hover:text-blue-800 transition-colors"
+                    >
+                        {item.dis_latitud_actual}
+                    </button>
+                ),
+            },
+
+            {
+                key: "dis_longitud_actual",
+                label: "Longitud",
+                width: 130,
+                render: (item) => (
+                    <button
+                        type="button"
+                        onClick={() => handleOpenMap(item)}
+                        className="text-blue-600 underline font-medium hover:text-blue-800 transition-colors"
+                    >
+                        {item.dis_longitud_actual}
+                    </button>
+                ),
+            },
+
             { key: "dis_estado", label: "Estado", width: 170 },
             { key: "dis_movimiento", label: "Movimiento", width: 110 },
             { key: "dis_bateria", label: "Batería", width: 100 },
@@ -138,23 +221,26 @@ export default function NeverasTabla({
             { key: "dis_desconexiones", label: "Desconexiones", width: 130 },
             { key: "dis_senial_celular", label: "Señal Celular", width: 120 },
             { key: "dis_senial_gps", label: "Señal GPS", width: 120 },
-            { key: "dis_fecha_instalacion", label: "Fecha Instalación", width: 150 },
-            { key: "dis_latitud_inst", label: "Latitud Instalación", width: 110 },
-            { key: "dis_longitud_inst", label: "Longitud Instalación", width: 110 },
-            { key: "dis_distancia_km_instalacion", label: "Distancia KM Instalación", width: 150 },
+
+            { key: "dis_fecha_instalacion", label: "Fecha", width: 150 },
+            { key: "dis_latitud_inst", label: "Latitud", width: 110 },
+            { key: "dis_longitud_inst", label: "Longitud", width: 110 },
+            { key: "dis_distancia_km_instalacion", label: "Distancia KM", width: 150 },
+
+            { key: "dis_fecha_cartera", label: "Fecha", width: 150 },
+            { key: "dis_latitud_cartera", label: "Latitud", width: 110 },
+            { key: "dis_longitud_cartera", label: "Longitud", width: 110 },
+            { key: "dis_distancia_km_cartera", label: "Distancia KM", width: 150 },
+            { key: "dis_iccid", label: "ICCID", width: 150 },
+
             { key: "dis_cliente_codigo", label: "Código Cliente", width: 130 },
             { key: "dis_cliente_nombre", label: "Cliente", width: 150 },
-            { key: "dis_fecha_cartera", label: "Fecha Cartera", width: 150 },
-            { key: "dis_latitud_cartera", label: "Latitud Cartera", width: 110 },
-            { key: "dis_longitud_cartera", label: "Longitud Cartera", width: 110 },
-            { key: "dis_distancia_km_cartera", label: "Distancia KM Cartera", width: 150 },
-            { key: "dis_fecha_censo", label: "Fecha Censo", width: 150 },
-            { key: "dis_latitud_censo", label: "Latitud Censo", width: 110 },
-            { key: "dis_longitud_censo", label: "Longitud Censo", width: 110 },
-            { key: "dis_distancia_km_censo", label: "Distancia KM Censo", width: 150 },
-            { key: "dis_iccid", label: "ICCID", width: 150 },
+            { key: "dis_fecha_censo", label: "Fecha", width: 150 },
+            { key: "dis_latitud_censo", label: "Latitud", width: 110 },
+            { key: "dis_longitud_censo", label: "Longitud", width: 110 },
+            { key: "dis_distancia_km_censo", label: "Distancia KM", width: 150 },
         ],
-        []
+        [handleOpenMap, handleOpenRecorrido]
     );
 
     const columnGroups: ColumnGroupDef[] = [
@@ -187,6 +273,16 @@ export default function NeverasTabla({
             ],
         },
         {
+            label: "Cartera",
+            columnKeys: [
+                "dis_fecha_cartera",
+                "dis_latitud_cartera",
+                "dis_longitud_cartera",
+                "dis_distancia_km_cartera",
+                "dis_iccid",
+            ],
+        },
+        {
             label: "Censo",
             columnKeys: [
                 "dis_cliente_codigo",
@@ -195,16 +291,6 @@ export default function NeverasTabla({
                 "dis_latitud_censo",
                 "dis_longitud_censo",
                 "dis_distancia_km_censo",
-            ],
-        },
-        {
-            label: "Cartera",
-            columnKeys: [
-                "dis_fecha_cartera",
-                "dis_latitud_cartera",
-                "dis_longitud_cartera",
-                "dis_distancia_km_cartera",
-                "dis_iccid",
             ],
         },
     ];
@@ -231,8 +317,7 @@ export default function NeverasTabla({
             estado: "",
         });
         setPage(1);
-        setDistribuidorFilter("");
-        setEstadoFilter("");
+        clearAllFilters();
 
         if (onClearExternalFilter) {
             onClearExternalFilter();
@@ -240,7 +325,7 @@ export default function NeverasTabla({
     };
 
     return (
-        <div>          
+        <div>
             <TableComponent
                 data={neveras}
                 columns={columns}
@@ -255,6 +340,25 @@ export default function NeverasTabla({
                     setSortDescriptor(d);
                     setPage(1);
                 }}
+                headerActions={
+                    <div className="flex gap-1">
+                        <DownloadButton
+                            url={DOWNLOAD_CONFIGS.censo.url}
+                            label="Censo"
+                            tooltip="Descargar Censo Actualizado"
+                            color="success"
+                            rolesPermitidos={DOWNLOAD_CONFIGS.censo.rolesPermitidos}
+                        />
+                        <DownloadButton
+                            url={DOWNLOAD_CONFIGS.cartera.url}
+                            label="Cartera"
+                            tooltip="Descargar Cartera"
+                            color="primary"
+                            rolesPermitidos={DOWNLOAD_CONFIGS.cartera.rolesPermitidos}
+                        />
+                    </div>
+
+                }
                 page={page}
                 pageSize={pageSize}
                 totalRegistros={totalRegistros}
@@ -264,6 +368,27 @@ export default function NeverasTabla({
                     setPage(1);
                 }}
                 isLoading={isLoading || isFetching || isLoadingPaginacion}
+            />
+
+            <MapModal
+                isOpen={isMapModalOpen}
+                onClose={() => setIsMapModalOpen(false)}
+                nevera={
+                    selectedNevera
+                        ? {
+                            cod_nevera: selectedNevera.dis_cod_nevera,
+                            imei: selectedNevera.dis_imei,
+                            latitud: selectedNevera.dis_latitud_actual,
+                            longitud: selectedNevera.dis_longitud_actual,
+                        }
+                        : null
+                }
+            />
+
+            <RecorridoMapModal
+                isOpen={isRecorridoModalOpen}
+                onClose={() => setIsRecorridoModalOpen(false)}
+                imei={selectedImei}
             />
         </div>
     );

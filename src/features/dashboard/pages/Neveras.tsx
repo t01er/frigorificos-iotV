@@ -1,4 +1,3 @@
-// Neveras.tsx
 import { useState, useCallback } from "react";
 import PageContainer from "../../../layouts/PageContainer";
 import NeverasTabla from "../components/NeverasTabla";
