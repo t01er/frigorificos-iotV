@@ -24,6 +24,7 @@ export default function TallerLayer({
     map,
     talleres,
 }: Props) {
+    const beforeLayer = map.getLayer("clusters") ? "clusters" : undefined;
     useEffect(() => {
 
         if (!map || !talleres.length) return;
@@ -66,16 +67,19 @@ export default function TallerLayer({
             data: geojson as any,
         });
 
-        map.addLayer({
-            id: "talleres-layer",
-            type: "symbol",
-            source: "talleres",
-            layout: {
-                "icon-image": ["get", "icon"],
-                "icon-size": 0.06,
-                "icon-allow-overlap": true,
+        map.addLayer(
+            {
+                id: "talleres-layer",
+                type: "symbol",
+                source: "talleres",
+                layout: {
+                    "icon-image": ["get", "icon"],
+                    "icon-size": 0.06,
+                    "icon-allow-overlap": true,
+                },
             },
-        });
+            beforeLayer
+        );
         map.on("click", "talleres-layer", (e) => {
             if (!e.features?.length) return;
 
@@ -97,7 +101,7 @@ export default function TallerLayer({
     `)
                 .addTo(map);
         });
-    
+
 
         map.loadImage("/taller.png", (err, image) => {
 

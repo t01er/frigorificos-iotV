@@ -26,7 +26,6 @@ export default function DeviceTabla() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [reloadData, setReloadData] = useState(false);
-    // Estados para edición
     const [editingDevice, setEditingDevice] = useState<DeviceItem | null>(null);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -55,14 +54,12 @@ export default function DeviceTabla() {
         handleReload();
     });
 
-    // Abrir modal para nuevo dispositivo
     const handleOpenModal = useCallback(() => {
         setIsEditing(false);
         setEditingDevice(null);
         setIsModalOpen(true);
     }, []);
 
-    // Abrir modal para editar dispositivo
     const handleEditDevice = useCallback((device: DeviceItem) => {
         setEditingDevice(device);
         setIsEditing(true);

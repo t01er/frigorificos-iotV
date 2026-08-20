@@ -115,18 +115,22 @@ function PieCard({
   return (
     <Card shadow="none" className={`h-full bg-white/30 backdrop-blur-md transition-all hover:shadow-md ${layout === "sidebar" ? "shadow-none" : "shadow-sm"}`}>
       <CardBody>
-
-
-        <div className={`flex flex-col md:flex-row ${layout === "sidebar" ? "items-center" : "items-center"} gap-10`}>
-          <div className={`${layout === "sidebar" ? "w-40 h-40 " : "w-50 h-50"}`}>
+        <div className={`flex flex-col md:flex-row overflow-hidden ${layout === "sidebar" ? "items-center" : "items-center"} gap-10`}>
+          <div className={`${layout === "sidebar" ? "w-40 h-40" : "w-50 h-49"}`}>
+            <div className="flex gap-2">
+              <h3 className="text-lg font-bold">{title}</h3>
+              <span className="text-xl font-bold">
+                {total.toLocaleString()}
+              </span>
+            </div>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   dataKey="value"
                   nameKey="name"
-                  innerRadius={layout === "sidebar" ? 30 : 40}
-                  outerRadius={layout === "sidebar" ? 70 : 100}
+                  innerRadius={layout === "sidebar" ? 30 : 30}
+                  outerRadius={layout === "sidebar" ? 70 : 70}
                   paddingAngle={3}
                 >
                   {data.map((item) => (
@@ -148,12 +152,7 @@ function PieCard({
 
           <div className="flex flex-col gap-2 flex-1">
 
-            <div className="flex justify-between items-center ">
-              <h3 className="text-lg font-bold">{title}</h3>
-              <span className="text-2xl font-bold">
-                {total.toLocaleString()}
-              </span>
-            </div>
+
             {data.map((item) => (
               <div
                 key={item.name}
@@ -361,11 +360,11 @@ export default function GraphicsCountNeveras({
         className={`bg-white/30 backdrop-blur-md p-1 transition-all`}
       >
         <div
-          className="flex justify-between items-center"
+          className="flex justify-between items-center gap-2"
           onClick={handleClearAllFilters}
           title={activeEstadoFilter ? "Haz clic para limpiar todos los filtros" : ""}
         >
-          <div className="flex items-start flex-col">
+          <div className="flex items-start gap-2">
             <h3 className="text-lg font-bold">Total de Neveras</h3>
             <button onClick={(e) => {
               e.stopPropagation();
@@ -379,7 +378,7 @@ export default function GraphicsCountNeveras({
           <div className="flex flex-col items-end">
             <span className="text-xs text-gray-500 mt-1">
               Última actualización:{" "}
-              {new Date(dashboard.registro_CORTE).toLocaleString()}
+              {dashboard.registro_CORTE}
             </span>
           </div>
         </div>

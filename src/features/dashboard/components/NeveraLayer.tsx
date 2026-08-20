@@ -72,7 +72,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
             !isNaN(f.geometry.coordinates[1])
         ),
     };
-    
+
 
     if (!map.isStyleLoaded()) {
       map.once("idle", () => updateLayer());
@@ -119,6 +119,8 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         layout: {
           "text-field": "{point_count_abbreviated}",
           "text-size": 12,
+          "text-allow-overlap": true,
+          "text-ignore-placement": true,
         },
         paint: {
           "text-color": "black",
@@ -190,6 +192,11 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
       map.on("mouseleave", "sensor-points", () => {
         map.getCanvas().style.cursor = "";
       });
+    }
+    if (map.getLayer("talleres-layer")) {
+      map.moveLayer("clusters");
+      map.moveLayer("cluster-count");
+      map.moveLayer("sensor-points");
     }
   }, [map, neveras]);
 

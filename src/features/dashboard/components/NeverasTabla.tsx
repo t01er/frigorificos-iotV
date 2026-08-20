@@ -227,18 +227,20 @@ export default function NeverasTabla({
             { key: "dis_longitud_inst", label: "Longitud", width: 110 },
             { key: "dis_distancia_km_instalacion", label: "Distancia KM", width: 150 },
 
-            { key: "dis_fecha_cartera", label: "Fecha", width: 150 },
-            { key: "dis_latitud_cartera", label: "Latitud", width: 110 },
-            { key: "dis_longitud_cartera", label: "Longitud", width: 110 },
-            { key: "dis_distancia_km_cartera", label: "Distancia KM", width: 150 },
-            { key: "dis_iccid", label: "ICCID", width: 150 },
-
             { key: "dis_cliente_codigo", label: "Código Cliente", width: 130 },
             { key: "dis_cliente_nombre", label: "Cliente", width: 150 },
             { key: "dis_fecha_censo", label: "Fecha", width: 150 },
             { key: "dis_latitud_censo", label: "Latitud", width: 110 },
             { key: "dis_longitud_censo", label: "Longitud", width: 110 },
             { key: "dis_distancia_km_censo", label: "Distancia KM", width: 150 },
+
+            { key: "dis_fecha_cartera", label: "Fecha", width: 150 },
+            { key: "dis_latitud_cartera", label: "Latitud", width: 110 },
+            { key: "dis_longitud_cartera", label: "Longitud", width: 110 },
+            { key: "dis_distancia_km_cartera", label: "Distancia KM", width: 150 },
+            { key: "dis_iccid", label: "ICCID", width: 150 },
+
+            
         ],
         [handleOpenMap, handleOpenRecorrido]
     );
@@ -273,16 +275,6 @@ export default function NeverasTabla({
             ],
         },
         {
-            label: "Cartera",
-            columnKeys: [
-                "dis_fecha_cartera",
-                "dis_latitud_cartera",
-                "dis_longitud_cartera",
-                "dis_distancia_km_cartera",
-                "dis_iccid",
-            ],
-        },
-        {
             label: "Censo",
             columnKeys: [
                 "dis_cliente_codigo",
@@ -293,6 +285,17 @@ export default function NeverasTabla({
                 "dis_distancia_km_censo",
             ],
         },
+        {
+            label: "Cartera",
+            columnKeys: [
+                "dis_fecha_cartera",
+                "dis_latitud_cartera",
+                "dis_longitud_cartera",
+                "dis_distancia_km_cartera",
+                "dis_iccid",
+            ],
+        },
+
     ];
 
     const filters: FilterFieldDef[] = [

@@ -126,15 +126,7 @@ export default function AlertDrawer({
                     onClick={handleRefresh}
                   >
                     Actualizar
-                  </Button>
-                  <Button
-                    isIconOnly
-                    size="sm"
-                    variant="light"
-                    onPress={onClose}
-                  >
-                    <Clapperboard className="w-5 h-5" />
-                  </Button>
+                  </Button>                
                 </div>
               </div>
               <div className="text-xs text-gray-500">
@@ -209,7 +201,6 @@ export default function AlertDrawer({
             <DrawerFooter className="border-t border-gray-200">
               <div className="flex items-center justify-between w-full text-xs text-gray-500">
                 <span>{alerts.length} alertas mostradas</span>
-                {isFetching && <Spinner size="sm" />}
                 <Button
                   size="sm"
                   variant="light"

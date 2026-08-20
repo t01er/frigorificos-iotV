@@ -340,7 +340,7 @@ export default function TableComponent<T extends Record<string, any>>({
                         minWidth: col.width,
                         ...(col.sticky ? { left: stickyOffsets[col.key] } : {}),
                       }}
-                      className={`px-3 py-2 text-xs text-zinc-500 border-b border-slate-50 whitespace-nowrap ${col.sticky
+                      className={`px-3 py-1 text-xs text-zinc-500 border-b border-slate-50 whitespace-nowrap ${col.sticky
                         ? "sticky z-10 bg-white group-hover:bg-slate-50 shadow-[1px_0_0_0_rgba(0,0,0,0.06)]"
                         : ""
                         } ${col.align === "center"

@@ -125,7 +125,9 @@ export default function Filters({
                 <Select
                   size="sm"
                   label="Departamento"
-                  startContent={<Signpost2 className="text-gray-500" size={18} />}
+                  startContent={
+                    <Signpost2 className="text-gray-500" size={18} />
+                  }
                   placeholder="Seleccione un departamento"
                   selectedKeys={
                     filters.departamento
@@ -138,6 +140,9 @@ export default function Filters({
                       departamento: String(Array.from(keys)[0] ?? ""),
                     })
                   }
+                  classNames={{
+                    listboxWrapper: "max-h-48 overflow-y-auto",
+                  }}
                 >
                   {departamentos.map((d) => (
                     <SelectItem key={d.departamento}>
@@ -159,6 +164,9 @@ export default function Filters({
                       distribuidor: Array.from(keys) as string[],
                     })
                   }
+                  classNames={{
+                    listboxWrapper: "max-h-48 overflow-y-auto",
+                  }}
                 >
                   {distribuidores.map((d) => (
                     <SelectItem key={d.nombre}>{d.nombre}</SelectItem>
