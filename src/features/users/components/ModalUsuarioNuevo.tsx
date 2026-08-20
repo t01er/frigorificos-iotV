@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
     useRegistrarUsuarioNestleMutation,
@@ -37,7 +37,7 @@ export default function ModalUsuarioNuevo({
     const userRole = user?.roles?.[0] || "";
     const empresaId = empresaIdProp ?? user?.id ?? 9;
 
-    const { data: perfiles = [], isLoading: isLoadingPerfiles } = useGetPerfilesQuery(userRole);
+    const { data: perfiles = [] } = useGetPerfilesQuery(userRole);
     const { data: distribuidoresData = [], isLoading: isLoadingDistribuidores } = useGetDistribuidoresMovilQuery();
 
     const distribuidoresDisponibles = useMemo(() => {

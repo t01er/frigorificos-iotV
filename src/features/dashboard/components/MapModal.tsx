@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody } from "@heroui/react";
+import { Modal, ModalContent, ModalHeader } from "@heroui/react";
 import mapboxgl from "mapbox-gl";
 import BigMap from "./BigMap";
 
@@ -48,7 +48,7 @@ export default function MapModal({
         <ModalHeader className="flex gap-2 text-base font-semibold">
           Ubicación de Nevera : {nevera.cod_nevera} {nevera.imei && `IMEI:(${nevera.imei})`}
         </ModalHeader>
-        <div className="p-0 h-[450px] bf overflow-hidden rounded-b-lg">
+        <div className="p-0 h-112.5 bf overflow-hidden rounded-b-lg">
           <BigMap center={[lng, lat]} zoom={15} mapStyle={mapStyle}>
             {(map) => <SingleMarker map={map} lng={lng} lat={lat} />}
           </BigMap>

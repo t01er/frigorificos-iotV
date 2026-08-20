@@ -1,12 +1,11 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     useGetDistribuidoresQuery,
     useGetClientesQuery,
     useGetTodosClientesQuery,
     useRegistrarDispositivoMutation,
-    useActualizarDispositivoMutation, 
+    useActualizarDispositivoMutation,
     type Distribuidor,
-    type Cliente,
     type DeviceItem
 } from '../services/deviceApi';
 import DynamicModal, { type FieldConfig } from '../../../components/ux/DynamicModal';
@@ -19,6 +18,12 @@ interface ModalDispositivoNuevoProps {
     setReloadData?: React.Dispatch<React.SetStateAction<boolean>>;
     editingDevice?: DeviceItem | null;
     isEditing?: boolean;
+}
+
+interface ClienteOption {
+    id: string;
+    cliente: string;
+    label: string;
 }
 
 export default function ModalDispositivoNuevo({
@@ -78,7 +83,7 @@ export default function ModalDispositivoNuevo({
         skip: !debouncedValue || debouncedValue.length < 2,
     });
 
-    const clientesOptions = useMemo(() => {
+    const clientesOptions = useMemo<ClienteOption[]>(() => {
         const filtrados = Array.isArray(clientesFiltrados)
             ? clientesFiltrados
             : (clientesFiltrados as any)?.data || [];
@@ -87,24 +92,23 @@ export default function ModalDispositivoNuevo({
             ? todosClientes
             : (todosClientes as any)?.data || [];
 
-        let options = [];
-        if (debouncedValue.length >= 2) {
-            options = filtrados;
-        } else {
-            options = todos;
-        }
+        const options = debouncedValue.length >= 2
+            ? filtrados
+            : todos;
 
-        const seen = new Set();
+        const seen = new Set<string>();
+
         return options
-            .map((item: any, index: number) => ({
+            .map((item: any, index: number): ClienteOption => ({
                 id: `${item.cliente}_${index}`,
                 cliente: item.cliente,
-                label: item.cliente
+                label: item.cliente,
             }))
-            .filter((item: any) => {
+            .filter((item: ClienteOption) => {
                 if (seen.has(item.cliente)) {
                     return false;
                 }
+
                 seen.add(item.cliente);
                 return true;
             });
@@ -206,29 +210,29 @@ export default function ModalDispositivoNuevo({
     ], []);
 
     const initialValues = useMemo(() => {
-    if (isEditing && editingDevice) {
+        if (isEditing && editingDevice) {
+            return {
+                chip: editingDevice.dis_imei_chip || "0",
+                codigo: editingDevice.dis_cod_nevera || "",
+                imei: editingDevice.dis_imei || "sin imei",
+                ubigeo: editingDevice.dis_ubigeo || "",
+                longitud: editingDevice.dis_longitud || "0",
+                latitud: editingDevice.dis_latitud || "0",
+                radio: editingDevice.dis_geozona?.toString() || "200",
+                estado: editingDevice.dis_estado?.toLowerCase() === "activo" ? 1 : 2,
+            };
+        }
         return {
-            chip: editingDevice.dis_imei_chip || "0",
-            codigo: editingDevice.dis_cod_nevera || "",
-            imei: editingDevice.dis_imei || "sin imei",
-            ubigeo: editingDevice.dis_ubigeo || "",
-            longitud: editingDevice.dis_longitud || "0",
-            latitud: editingDevice.dis_latitud || "0",
-            radio: editingDevice.dis_geozona?.toString() || "200",
-            estado: editingDevice.dis_estado?.toLowerCase() === "activo" ? 1 : 2,
+            chip: "0",
+            codigo: "",
+            imei: "sin imei",
+            ubigeo: "",
+            longitud: "0",
+            latitud: "0",
+            radio: "200",
+            estado: 1,
         };
-    }
-    return {
-        chip: "0",
-        codigo: "",
-        imei: "sin imei",
-        ubigeo: "",
-        longitud: "0",
-        latitud: "0",
-        radio: "200",
-        estado: 1,
-    };
-}, [isEditing, editingDevice]);
+    }, [isEditing, editingDevice]);
 
     const handleSubmit = async (formData: Record<string, any>) => {
         if (!formData.codigo?.trim()) {
@@ -257,7 +261,7 @@ export default function ModalDispositivoNuevo({
 
             try {
                 await actualizarDispositivo(updateData).unwrap();
-                
+
                 if (setReloadData) {
                     setReloadData(true);
                 }
@@ -286,7 +290,7 @@ export default function ModalDispositivoNuevo({
 
             try {
                 await registrarDispositivo(newDispositivo).unwrap();
-                
+
                 if (setReloadData) {
                     setReloadData(true);
                 }

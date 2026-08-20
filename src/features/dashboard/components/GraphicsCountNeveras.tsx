@@ -71,7 +71,7 @@ function PieCardSkeleton({ layout }: { layout: "grid" | "sidebar" }) {
   return (
     <Card shadow="none" className={`h-full bg-white/30 backdrop-blur-md ${layout === "sidebar" ? "shadow-none" : "shadow-sm"}`}>
       <CardBody>
-        <Skeleton className="rounded-lg w-[25rem] h-7 mb-4" />
+        <Skeleton className="rounded-lg w-100 h-7 mb-4" />
 
         <div className={`flex flex-col md:flex-row ${layout === "sidebar" ? "items-center" : "items-center"} gap-10`}>
           <div className={`${layout === "sidebar" ? "w-40 h-40" : "w-50 h-50"}`}>
@@ -237,14 +237,6 @@ export default function GraphicsCountNeveras({
       onFilterByEstado(estadoLabel);
     }
   };
-
-  const hasActiveFilters = Boolean(
-    activeEstadoFilter ||
-    distribuidorFilter ||
-    codNeveraFilter ||
-    imeiFilter ||
-    locacionFilter
-  );
 
 
   const handleClearAllFilters = () => {

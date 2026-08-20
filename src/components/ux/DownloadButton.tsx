@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Download, DownloadMinimalistic, DownloadSquare } from "@solar-icons/react";
 import { Button, CircularProgress, Tooltip } from "@heroui/react";
 import { useDownload } from "../../hooks/useDownload";
@@ -28,7 +27,6 @@ const DownloadButton = ({
     url,
     label,
     tooltip = label,
-    color = "primary",
     icon,
     fileName,
     method = "GET",
@@ -42,7 +40,6 @@ const DownloadButton = ({
     showConfirmDialog = false,
     confirmMessage = "¿Está seguro de descargar este archivo?",
 }: DownloadButtonProps) => {
-    const [hasPermission, setHasPermission] = useState(true);
 
     if (rolesPermitidos.length > 0) {
         const userDataString = localStorage.getItem("user") ?? "{}";
@@ -55,7 +52,7 @@ const DownloadButton = ({
         }
     }
 
-    const { download, loading, error } = useDownload({
+    const { download, loading } = useDownload({
         url,
         method,
         body,

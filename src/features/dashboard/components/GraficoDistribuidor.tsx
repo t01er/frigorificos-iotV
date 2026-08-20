@@ -1,4 +1,3 @@
-// GraficoDistribuidor.tsx
 import React, { useCallback, useState } from "react";
 import {
     BarChart,
@@ -387,7 +386,6 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                         return acc + sumaDistribuidor;
                     }, 0);
 
-                    const distribuidoresCount = Object.keys(regionData).length;
                     const columnas = dividirEnColumnas(chartData);
                     const tieneMultiplesColumnas = columnas.length > 1;
 

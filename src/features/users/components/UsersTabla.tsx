@@ -259,7 +259,6 @@ export default function UsersTabla() {
         },
     ];
 
-    const totalPages = Math.ceil(totalRegistros / pageSize);
 
     return (
         <>
