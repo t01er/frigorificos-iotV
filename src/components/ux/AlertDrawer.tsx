@@ -11,7 +11,7 @@ import {
 } from "@heroui/react";
 import { useGetAlertsHistoricalQuery } from "../../features/alerts/services/alertsApi";
 import type { AlertsItem } from "../../features/alerts/services/alertsApi";
-import { Bell, Clapperboard } from "@solar-icons/react";
+import { Bell } from "@solar-icons/react";
 import { useNavigate } from "react-router-dom";
 
 interface AlertDrawerProps {
