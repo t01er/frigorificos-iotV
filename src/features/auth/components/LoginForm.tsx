@@ -106,10 +106,9 @@ export default function LoginForm() {
       <div className="pt-2">
         <Button
           type="submit"
-          variant="solid"
-          color="primary"
+          variant="solid"          
           radius="sm"
-          className="w-full"
+          className="w-full bg-white text-primary font-bold"
           isLoading={isLoading}
           isDisabled={isLoading || !captchaToken}
         >

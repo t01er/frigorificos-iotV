@@ -41,7 +41,11 @@ const getEstadoColor = (estado: string) => {
   return map[estado?.toLowerCase()] ?? "default";
 };
 
-export default function AlertDrawer({ isOpen, onClose, onAlertsRead }: AlertDrawerProps) {
+export default function AlertDrawer({ 
+  isOpen, 
+  onClose, 
+  onAlertsRead 
+}: AlertDrawerProps) {
   const [alerts, setAlerts] = useState<AlertsItem[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const navigate = useNavigate();
@@ -67,11 +71,10 @@ export default function AlertDrawer({ isOpen, onClose, onAlertsRead }: AlertDraw
   const { data, isLoading, isFetching, refetch } = useGetAlertsHistoricalQuery(
     getFilterParams(),
     {
-      skip: !isOpen,
-      pollingInterval: 30000,
+      pollingInterval: 30000, 
+      refetchOnMountOrArgChange: true, 
     }
   );
-
 
   useEffect(() => {
     if (data?.data) {
@@ -93,8 +96,6 @@ export default function AlertDrawer({ isOpen, onClose, onAlertsRead }: AlertDraw
     }
   }, [isOpen, onAlertsRead]);
 
-
-
   return (
     <Drawer
       isOpen={isOpen}
@@ -110,6 +111,12 @@ export default function AlertDrawer({ isOpen, onClose, onAlertsRead }: AlertDraw
                 <div className="flex items-center gap-2">
                   <Bell className="w-5 h-5 text-primary" />
                   <h2 className="text-xl font-bold">Alertas</h2>
+                  {/* Mostrar badge de nuevas alertas en el header */}
+                  {alerts.length > 0 && (
+                    <Chip size="sm" color="primary" variant="flat">
+                      {alerts.length} recientes
+                    </Chip>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -168,7 +175,6 @@ export default function AlertDrawer({ isOpen, onClose, onAlertsRead }: AlertDraw
                             >
                               {alert.alert_evento}
                             </Chip>
-                            
                           </div>
 
                           <p className="text-sm font-medium text-gray-900 truncate">
@@ -193,7 +199,6 @@ export default function AlertDrawer({ isOpen, onClose, onAlertsRead }: AlertDraw
                             </span>
                           </div>
                         </div>
-
                       </div>
                     </div>
                   ))}
