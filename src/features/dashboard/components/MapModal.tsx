@@ -19,7 +19,6 @@ const TIPO_PUNTO_COLORES = {
   default: "#808080",
 } as const;
 
-type TipoPunto = keyof typeof TIPO_PUNTO_COLORES;
 
 interface NeveraModalData {
   cod_nevera: string;

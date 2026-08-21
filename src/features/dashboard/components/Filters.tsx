@@ -1,7 +1,5 @@
 import { useState, useMemo } from "react";
 import {
-  Select,
-  SelectItem,
   Button,
   Input,
   Spinner,
@@ -26,7 +24,6 @@ import {
   Signpost2,
   UserCheckRounded,
   CloseCircle,
-  Broom,
 } from "@solar-icons/react";
 
 import {

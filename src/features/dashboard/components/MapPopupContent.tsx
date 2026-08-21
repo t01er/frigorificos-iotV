@@ -44,7 +44,6 @@ export default function MapPopupContent({
   title,
   headerIcon,
   fields,
-  accentColor = "#1E187B",
   widthClassName = "w-56",
 }: MapPopupContentProps) {
   return (

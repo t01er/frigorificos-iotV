@@ -9,7 +9,7 @@ import {
     type CorreoNestle,
 } from "../services/alertsApi";
 import CreateUserModal from "./CreateUserModal";
-import { AddCircle, Download, InboxIn } from "@solar-icons/react";
+import { AddCircle, InboxIn } from "@solar-icons/react";
 import * as XLSX from 'xlsx';
 
 const PAGE_SIZE_DEFAULT = 15;
