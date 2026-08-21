@@ -6,6 +6,8 @@ import TableComponent, {
 import { useGetUsersQuery, type UserItem } from "../services/userApi";
 import { Avatar, Chip, Button } from "@heroui/react";
 import ModalUsuarioNuevo from "./ModalUsuarioNuevo";
+import * as XLSX from 'xlsx';
+import { InboxIn, PenNewSquare, TrashBinTrash } from "@solar-icons/react";
 
 const PAGE_SIZE_DEFAULT = 15;
 
@@ -22,18 +24,16 @@ export default function UsersTabla() {
         direction: "ascending" | "descending";
     }>({ column: "usu_usuario", direction: "ascending" });
 
-    // Estados para el modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [reloadData, setReloadData] = useState(false);
     const [editingUser, setEditingUser] = useState<UserItem | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
-    // Obtener todos los usuarios (sin paginación en el backend)
     const { data, isLoading, isFetching, refetch } = useGetUsersQuery();
 
     const allUsers = data?.data ?? [];
 
-    // Recargar datos cuando se guarda un usuario
     const handleReload = useCallback(() => {
         if (reloadData) {
             refetch();
@@ -45,11 +45,9 @@ export default function UsersTabla() {
         handleReload();
     }, [handleReload, reloadData]);
 
-    // Filtrar usuarios
     const filteredUsers = useMemo(() => {
         let result = [...allUsers];
 
-        // Filtro por búsqueda
         const searchTerm = filterValues.usu_usuario?.toLowerCase() || "";
         if (searchTerm) {
             result = result.filter((user) =>
@@ -61,14 +59,12 @@ export default function UsersTabla() {
             );
         }
 
-        // Filtro por estado
         if (filterValues.estado) {
             result = result.filter((user) =>
                 user.usu_estado?.toLowerCase() === filterValues.estado.toLowerCase()
             );
         }
 
-        // Filtro por tipo/perfil
         if (filterValues.tipo) {
             result = result.filter((user) =>
                 user.usu_tipo?.toLowerCase() === filterValues.tipo.toLowerCase()
@@ -78,7 +74,6 @@ export default function UsersTabla() {
         return result;
     }, [allUsers, filterValues]);
 
-    // Ordenar usuarios
     const sortedUsers = useMemo(() => {
         return [...filteredUsers].sort((a, b) => {
             const col = sortDescriptor.column as keyof UserItem;
@@ -91,28 +86,67 @@ export default function UsersTabla() {
         });
     }, [filteredUsers, sortDescriptor]);
 
-    // Total de registros después de filtros
     const totalRegistros = sortedUsers.length;
 
-    // Paginación en frontend
     const paginatedUsers = useMemo(() => {
         const start = (page - 1) * pageSize;
         return sortedUsers.slice(start, start + pageSize);
     }, [sortedUsers, page, pageSize]);
 
-    // Resetear a página 1 cuando cambian los filtros
     useEffect(() => {
         setPage(1);
     }, [filterValues, pageSize]);
 
-    // Abrir modal para nuevo usuario
+
+    const handleDownloadExcel = useCallback(() => {
+        setIsExporting(true);
+
+        try {
+            const excelData = sortedUsers.map((user) => ({
+                'Usuario': user.usu_usuario || '',
+                'Nombre': user.usu_nombre || '',
+                'Correo': user.usu_correo || '',
+                'Teléfono': user.usu_telefono || '',
+                'Cargo': user.usu_cargo || '',
+                'Perfil': user.usu_tipo || '',
+                'Estado': user.usu_estado || '',
+            }));
+
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+            const columnWidths = [
+                { wch: 20 },
+                { wch: 25 },
+                { wch: 30 },
+                { wch: 15 },
+                { wch: 20 },
+                { wch: 20 },
+                { wch: 15 },
+            ];
+            worksheet['!cols'] = columnWidths;
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
+
+            const date = new Date();
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            const filename = `Usuarios_${dateStr}.xlsx`;
+
+            XLSX.writeFile(workbook, filename);
+
+        } catch (error) {
+            console.error("Error al exportar Excel:", error);
+        } finally {
+            setIsExporting(false);
+        }
+    }, [sortedUsers]);
+
     const handleOpenModal = useCallback(() => {
         setIsEditing(false);
         setEditingUser(null);
         setIsModalOpen(true);
     }, []);
 
-    // Abrir modal para editar usuario
     const handleEditUser = useCallback((user: UserItem) => {
         setEditingUser(user);
         setIsEditing(true);
@@ -133,7 +167,6 @@ export default function UsersTabla() {
         }
     }, []);
 
-    // Columnas con acción de editar
     const columns: CustomColumnDef<UserItem>[] = useMemo(
         () => [
             {
@@ -199,27 +232,35 @@ export default function UsersTabla() {
                     );
                 },
             },
-            // Columna de acciones - Botón Editar
             {
                 key: "acciones",
                 label: "Acciones",
                 width: 100,
                 align: "center",
                 render: (item) => (
-                    <Button
-                        size="sm"
-                        variant="light"
-                        color="primary"
-                        onPress={() => handleEditUser(item)}
-                        startContent={
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                        }
-                    >
-                        Editar
-                    </Button>
+                    <div className="flex items-center justify-center" >
+                        <Button
+                            size="sm"
+                            variant="light"
+                            color="primary"
+                            onPress={() => handleEditUser(item)}
+                            startContent={
+                                <PenNewSquare size={18} />
+                            }
+                        >
+                            Editar
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="light"
+                            color="danger"
+                            startContent={
+                                <TrashBinTrash size={18} />
+                            }
+                        >
+                            Editar
+                        </Button>
+                    </div>
                 ),
             },
         ],
@@ -259,6 +300,30 @@ export default function UsersTabla() {
         },
     ];
 
+    const headerActions = (
+        <div className="flex gap-2">
+            <Button
+                color="primary"
+                size="sm"
+                onPress={handleOpenModal}
+                startContent={<span>+</span>}
+            >
+                Nuevo Usuario
+            </Button>
+            <Button
+                color="success"
+                size="sm"
+                variant="solid"
+                onPress={handleDownloadExcel}
+
+                startContent={
+                    <InboxIn size={15} />
+                }
+            >
+                {isExporting ? "Exportando..." : "Exportar Excel"}
+            </Button>
+        </div>
+    );
 
     return (
         <>
@@ -268,16 +333,7 @@ export default function UsersTabla() {
                 idField="usu_id"
                 filters={filters}
                 filterValues={filterValues}
-                headerActions={
-                    <Button
-                        color="primary"
-                        size="sm"
-                        onPress={handleOpenModal}
-                        startContent={<span>+</span>}
-                    >
-                        Nuevo Usuario
-                    </Button>
-                }
+                headerActions={headerActions}
                 onFilterChange={(key, value) => {
                     setFilterValues((prev) => ({ ...prev, [key]: value }));
                 }}
@@ -309,7 +365,7 @@ export default function UsersTabla() {
                 setReloadData={setReloadData}
                 editingUser={editingUser}
                 isEditing={isEditing}
-                empresaId={9} 
+                empresaId={9}
             />
         </>
     );

@@ -6,7 +6,6 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
     ResponsiveContainer,
     LabelList,
 } from "recharts";
@@ -72,6 +71,35 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     );
 };
 
+const GlobalLegend = () => {
+    const legendItems = [
+        {
+            label: "Fuera de Zona",
+            color: ESTADO_COLORS["Fuera de Zona"],
+        },
+        {
+            label: "Desconexión de Energía",
+            color: ESTADO_COLORS["Desconexión de Energía"],
+        },
+    ];
+
+    return (
+        <div className="flex flex-wrap justify-center gap-6 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            {legendItems.map((item) => (
+                <div key={item.label} className="flex items-center gap-2">
+                    <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                        {item.label}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 function TarjetaPequenaSkeleton() {
     return (
         <Card shadow="none" className="bg-white h-full min-h-100">
@@ -91,7 +119,6 @@ function TarjetaPequenaSkeleton() {
         </Card>
     );
 }
-
 
 function TarjetaGrandeSkeleton() {
     return (
@@ -122,31 +149,27 @@ function TarjetaGrandeSkeleton() {
     );
 }
 
-const CustomLegend = ({ payload }: any) => {
-    return (
-        <div className="flex flex-wrap justify-center gap-3 mb-2">
-            {payload.map((entry: any, index: number) => (
-                <div key={index} className="flex items-center gap-1.5">
-                    <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="text-xs font-medium text-gray-700">
-                        {entry.value}
-                    </span>
-                </div>
-            ))}
-        </div>
-    );
-};
-
 const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
     onDistribuidorClick,
     onEstadoClick,
     onClearFilters,
 }) => {
-    const { setDistribuidorFilter, setEstadoFilter } = useNeveraFilterContext();
-    const { data, isLoading, error } = useGetEventosDashboardPorDistribuidorQuery();
+    const {
+        setDistribuidorFilter,
+        setEstadoFilter,
+        distribuidorFilter,
+        codNeveraFilter,
+        imeiFilter,
+        locacionFilter,
+    } = useNeveraFilterContext();
+
+    const queryParams = {
+        ...(distribuidorFilter && { distribuidor: distribuidorFilter }),
+        ...(codNeveraFilter && { cod_nevera: codNeveraFilter }),
+        ...(imeiFilter && { imei: imeiFilter }),
+        ...(locacionFilter && { locacion: locacionFilter }),
+    };
+    const { data, isLoading, error } = useGetEventosDashboardPorDistribuidorQuery(queryParams);
     const [activeBar, setActiveBar] = useState<{
         region: string;
         distribuidor: string;
@@ -270,11 +293,12 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
 
     const regionesPequenas = regionesOrdenadas.slice(0, -1);
     const regionGrande = regionesOrdenadas[regionesOrdenadas.length - 1];
+
     return (
-        <div className="flex flex-col gap-6 ">
+        <div className="flex flex-col gap-6">
+            <GlobalLegend />
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-
                 {regionesPequenas.map((region) => {
                     const regionData = data.data[0].regiones[region];
                     if (!regionData) return null;
@@ -310,7 +334,7 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                                     {activeBar?.region === region && (
                                         <div className="mb-3 p-2 bg-blue-50 rounded-lg text-sm text-blue-700 flex items-center justify-between">
                                             <span>
-                                                Filtrando: <strong>{activeBar.distribuidor},{activeBar.estado}</strong>
+                                                Filtrando: <strong>{activeBar.distribuidor}, {activeBar.estado}</strong>
                                             </span>
                                             <button
                                                 onClick={handleClearLocalFilter}
@@ -344,7 +368,6 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                                                 }}
                                             />
                                             <Tooltip content={<CustomTooltip />} />
-                                            <Legend content={<CustomLegend />} />
 
                                             {ESTADOS_PERMITIDOS.map((estado) => {
                                                 const label = ESTADO_LABELS[estado];
@@ -393,13 +416,16 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                         return Math.max(220, data.length * 30);
                     };
 
-                    const limpiarNombre = (nombre: string) => nombre.replace(/friohielos\s*/gi, "").trim();
-
+                    const limpiarNombre = (nombre: string) => {
+                        if (nombre.trim().toLowerCase() === "friohielos") {
+                            return "FRIO HIELOS";
+                        }
+                        return nombre.replace(/^friohielos\s*/gi, "").trim();
+                    };
                     return (
                         <div className="col-span-1 md:col-span-2 xl:col-span-3 h-full">
                             <Card shadow="none" className="bg-white h-full">
                                 <CardBody className="flex flex-col justify-start h-full gap-10">
-
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
                                         <div className="flex items-center gap-3">
                                             <h3 className="text-xl font-bold text-gray-800">
@@ -421,7 +447,7 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                                                         Limpiar
                                                     </button>
                                                 </div>
-                                            )}                                            
+                                            )}
                                         </div>
                                     </div>
 
@@ -468,7 +494,6 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                                                             }}
                                                         />
                                                         <Tooltip content={<CustomTooltip />} />
-                                                        {colIndex === 0 && <Legend content={<CustomLegend />} />}
 
                                                         {ESTADOS_PERMITIDOS.map((estado) => {
                                                             const label = ESTADO_LABELS[estado];
@@ -502,7 +527,6 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
                         </div>
                     );
                 })()}
-
             </div>
         </div>
     );

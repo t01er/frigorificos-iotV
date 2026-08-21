@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Card, CardBody, Skeleton } from "@heroui/react";
+import { Card, CardBody, Skeleton, Button } from "@heroui/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AltArrowDown } from "@solar-icons/react"; 
 import { useGetDashboardContadoresQuery } from "../services/mapApi";
 import { useNeveraFilterContext } from "../contexts/NeveraFilterContext";
 import {
@@ -113,10 +115,10 @@ function PieCard({
   };
 
   return (
-    <Card shadow="none" className={`h-full bg-white/30 backdrop-blur-md transition-all hover:shadow-md ${layout === "sidebar" ? "shadow-none" : "shadow-sm"}`}>
+    <Card shadow="none" className={`h-full bg-white backdrop-blur-md transition-all hover:shadow-md ${layout === "sidebar" ? "shadow-none" : "shadow-sm"}`}>
       <CardBody>
         <div className={`flex flex-col md:flex-row overflow-hidden ${layout === "sidebar" ? "items-center" : "items-center"} gap-10`}>
-          <div className={`${layout === "sidebar" ? "w-40 h-40" : "w-50 h-49"}`}>
+          <div className={`${layout === "sidebar" ? "w-40 h-50" : "w-50 h-50"}`}>
             <div className="flex gap-2">
               <h3 className="text-lg font-bold">{title}</h3>
               <span className="text-xl font-bold">
@@ -151,8 +153,6 @@ function PieCard({
           </div>
 
           <div className="flex flex-col gap-2 flex-1">
-
-
             {data.map((item) => (
               <div
                 key={item.name}
@@ -206,6 +206,7 @@ export default function GraphicsCountNeveras({
     clearAllFilters,
   } = useNeveraFilterContext();
   const [activeEstadoFilter, setActiveEstadoFilter] = useState<string>("");
+  const [isOpen, setIsOpen] = useState(true);
 
   const queryParams = {
     ...(distribuidorFilter && { distribuidor: distribuidorFilter }),
@@ -237,7 +238,6 @@ export default function GraphicsCountNeveras({
     }
   };
 
-
   const handleClearAllFilters = () => {
     setActiveEstadoFilter("");
     clearAllFilters();
@@ -245,6 +245,7 @@ export default function GraphicsCountNeveras({
       onClearFilters();
     }
   };
+
   if (isLoading) {
     return (
       <div className="flex flex-col gap-2 animate-pulse">
@@ -352,61 +353,92 @@ export default function GraphicsCountNeveras({
     },
   ];
 
-
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col ">
       <Card
         shadow="none"
-        className={`bg-white/30 backdrop-blur-md p-1 transition-all`}
+        className="bg-primary text-white backdrop-blur-md p-1 transition-all"
       >
         <div
-          className="flex justify-between items-center gap-2"
-          onClick={handleClearAllFilters}
+          className="flex px-2 justify-between items-center gap-2"
           title={activeEstadoFilter ? "Haz clic para limpiar todos los filtros" : ""}
         >
-          <div className="flex items-start gap-2">
+          <div
+            className="flex items-start gap-2 cursor-pointer"
+            onClick={handleClearAllFilters}
+          >
             <h3 className="text-lg font-bold">Total de Neveras</h3>
-            <button onClick={(e) => {
-              e.stopPropagation();
-              handleClearAllFilters();
-            }}
-              className="text-lg font-bold group-hover:text-red-600 hover:underline transition-all">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClearAllFilters();
+              }}
+              className="text-lg font-bold group-hover:text-red-600 hover:underline transition-all"
+            >
               {total.toLocaleString()}
             </button>
           </div>
 
-          <div className="flex flex-col items-end">
-            <span className="text-xs text-gray-500 mt-1">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-white">
               Última actualización:{" "}
-              {dashboard.registro_CORTE}
+              {dashboard.registro_CORTE?.replaceAll("-", "/")}
             </span>
+
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              onPress={() => setIsOpen((prev) => !prev)}
+              aria-label={isOpen ? "Ocultar contadores" : "Mostrar contadores"}
+            >
+              <motion.div
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <AltArrowDown size={18} color="white" />
+              </motion.div>
+            </Button>
           </div>
         </div>
       </Card>
 
-      <div className={cardsClass}>
-        <PieCard
-          title="Operativas"
-          data={operativas}
-          layout={layout}
-          onItemClick={handleEstadoClick}
-          activeFilter={activeEstadoFilter}
-        />
-        <PieCard
-          title="Alertadas"
-          data={alertadas}
-          layout={layout}
-          onItemClick={handleEstadoClick}
-          activeFilter={activeEstadoFilter}
-        />
-        <PieCard
-          title="En Traslado"
-          data={otros}
-          layout={layout}
-          onItemClick={handleEstadoClick}
-          activeFilter={activeEstadoFilter}
-        />
-      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="graphics-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className={`${cardsClass} pt-2`}>
+              <PieCard
+                title="Operativas"
+                data={operativas}
+                layout={layout}
+                onItemClick={handleEstadoClick}
+                activeFilter={activeEstadoFilter}
+              />
+              <PieCard
+                title="Alertadas"
+                data={alertadas}
+                layout={layout}
+                onItemClick={handleEstadoClick}
+                activeFilter={activeEstadoFilter}
+              />
+              <PieCard
+                title="En Traslado"
+                data={otros}
+                layout={layout}
+                onItemClick={handleEstadoClick}
+                activeFilter={activeEstadoFilter}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

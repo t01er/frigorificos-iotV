@@ -101,6 +101,7 @@ export default function AlertDrawer({
       isOpen={isOpen}
       onClose={onClose}
       placement="right"
+      radius="none"
       size="md"
     >
       <DrawerContent>
@@ -111,9 +112,8 @@ export default function AlertDrawer({
                 <div className="flex items-center gap-2">
                   <Bell className="w-5 h-5 text-primary" />
                   <h2 className="text-xl font-bold">Alertas</h2>
-                  {/* Mostrar badge de nuevas alertas en el header */}
                   {alerts.length > 0 && (
-                    <Chip size="sm" color="primary" variant="flat">
+                    <Chip size="sm" color="primary" variant="solid">
                       {alerts.length} recientes
                     </Chip>
                   )}

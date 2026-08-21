@@ -1,3 +1,4 @@
+import { useState } from "react";
 import PageContainer from "../../../layouts/PageContainer";
 import AlertasActivasTabla from "../components/AlertasActivasTabla";
 import HistorialAlertasTabla from "../components/HistorialAlertasTabla";
@@ -6,6 +7,7 @@ import CorreosNestleTabla from "../components/CorreosNestleTabla";
 import { Accordion, AccordionItem } from "@heroui/react";
 
 export default function Alerts() {
+  const [totalHistorial, setTotalHistorial] = useState(0);
   return (
     <PageContainer>
       <Accordion
@@ -31,8 +33,16 @@ export default function Alerts() {
 
         <AccordionItem
           key="2"
-          aria-label="Alertas Históricas"
-          title="Alertas Históricas"
+          aria-label="Historial de eventos de los últimos 3 meses"
+          title={
+            <div className="flex items-center gap-2">
+              <span>Historial de eventos de los últimos 3 meses</span>
+
+              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                {totalHistorial}
+              </span>
+            </div>
+          }
           classNames={{
             base: "p-0 overflow-hidden",
             heading: "p-0",
@@ -40,7 +50,7 @@ export default function Alerts() {
             title: "text-white",
           }}
         >
-          <HistorialAlertasTabla />
+          <HistorialAlertasTabla onTotalChange={setTotalHistorial} />
         </AccordionItem>
 
         <AccordionItem

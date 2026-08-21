@@ -67,6 +67,20 @@ export interface AlertsResponse {
     data: AlertsItem[];
 }
 
+export interface CreateCorreoRequest {
+    correo_email: string;
+    correo_empresa: string;
+    correo_nombre: string;
+    correo_telefono: string;
+}
+
+export interface CreateCorreoResponse {
+    status: boolean;
+    message?: string;
+    data?: any;
+}
+
+
 export const alertsApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getAlertsHistorical: builder.query<AlertsResponse, AlertsFilters>({
@@ -145,6 +159,15 @@ export const alertsApi = apiSlice.injectEndpoints({
                 method: "GET",
             }),
         }),
+        createCorreoNestle: builder.mutation<CreateCorreoResponse, CreateCorreoRequest>({
+            query: (data) => ({
+                url: `${API_NESTLE}/api/Consultas/registrarCorreosNestle`,
+                method: "POST",
+                body: data,
+            }),
+            invalidatesTags: ['CorreosNestle'],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -154,7 +177,8 @@ export const {
     useGetAlertsHistoricalCountQuery,
     useGetAlertsHistoricalV2Query,
     useGetAlertsHistoricalCountV2Query,
-     useGetCorreosNestleQuery,
+    useGetCorreosNestleQuery,
+    useCreateCorreoNestleMutation,
 } = alertsApi;
 
 

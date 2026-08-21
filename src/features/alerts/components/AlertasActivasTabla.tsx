@@ -102,12 +102,34 @@ export default function AlertsTabla() {
 
     const columns: CustomColumnDef<AlertsItem>[] = useMemo(
         () => [
-            { key: "alert_dis_cod_nevera", label: "Cod. Nevera", width: 130 },
-            { key: "alert_dis_imei", label: "IMEI", width: 130 },
-            { key: "alert_dis_distribuidor", label: "Distribuidor", width: 130 },
-            { key: "alert_loc_nom", label: "Locación", width: 130 },
+            { key: "alert_dis_cod_nevera", label: "Cod. Nevera", width: 130, sortable: false },
+            { key: "alert_dis_imei", label: "IMEI", width: 130, sortable: false },
+            { key: "alert_dis_distribuidor", label: "Distribuidor", width: 130, sortable: false },
+            { key: "alert_dis_fechahora", label: "Fecha Evento", width: 130, sortable: true },
+             {
+                key: "alert_evento",
+                label: "Evento",
+                width: 130,
+                sortable: false,
+                align: "center",
+                render: (item) => {
+                    const estado = item.alert_evento?.toLowerCase();
+                    const map: Record<string, "secondary" | "danger" | "warning" | "default"> = {
+                        "desconexión por energía": "warning",
+                        "detenido fuera de zona": "danger",
+                        "movimiento fuera de zona": "secondary",
+                    };
+                    return (
+                        <Chip size="sm" variant="light" color={map[estado] ?? "default"}>
+                            {item.alert_evento}
+                        </Chip>
+                    );
+                },
+            },
+            { key: "alert_loc_nom", label: "Locación", width: 130, sortable: false },
             {
                 key: "alert_dis_bateria",
+                sortable: false,
                 label: "Batería",
                 width: 140,
                 render: (item) => {
@@ -135,6 +157,7 @@ export default function AlertsTabla() {
             {
                 key: "alert_dis_energia",
                 label: "Energía",
+                sortable: false,
                 width: 100,
                 align: "start",
                 render: (item) => (
@@ -150,6 +173,7 @@ export default function AlertsTabla() {
             {
                 key: "ubicacion",
                 label: "Ubicación",
+                sortable: false,
                 width: 200,
                 render: (item) => {
                     const lat = item.alert_dis_lat;
@@ -171,30 +195,11 @@ export default function AlertsTabla() {
                     );
                 },
             },
-            { key: "alert_dis_signal", label: "Señal", width: 130 },
-            { key: "alert_dis_satelite", label: "Satélite", width: 130 },
-            {
-                key: "alert_evento",
-                label: "Estado",
-                width: 130,
-                align: "center",
-                render: (item) => {
-                    const estado = item.alert_evento?.toLowerCase();
-                    const map: Record<string, "secondary" | "danger" | "warning" | "default"> = {
-                        "desconexión por energía": "warning",
-                        "detenido fuera de zona": "danger",
-                        "movimiento fuera de zona": "secondary",
-                    };
-                    return (
-                        <Chip size="sm" variant="light" color={map[estado] ?? "default"}>
-                            {item.alert_evento}
-                        </Chip>
-                    );
-                },
-            },
-            { key: "alert_movimiento", label: "Movimiento", width: 130 },
-            { key: "alert_dis_fechahora", label: "Fecha/Hora", width: 130 },
-            { key: "alert_dis_cliente", label: "Cliente", width: 130 },
+            { key: "alert_dis_signal", label: "Señal", width: 130, sortable: false },
+            { key: "alert_dis_satelite", label: "Satélite", width: 130, sortable: false },
+           
+            { key: "alert_movimiento", label: "Movimiento", width: 130, sortable: false },
+            { key: "alert_dis_cliente", label: "Cliente", width: 130, sortable: false },
         ],
         [handleOpenMap]
     );
@@ -259,16 +264,21 @@ export default function AlertsTabla() {
                 isLoading={isLoading || isFetching || isCountLoading}
             />
 
+
             <MapModal
                 isOpen={isMapModalOpen}
-                onClose={() => setIsMapModalOpen(false)}
+                onClose={() => {
+                    setIsMapModalOpen(false);
+                    setSelectedAlert(null);
+                }}
                 nevera={
                     selectedAlert
                         ? {
                             cod_nevera: selectedAlert.alert_dis_cod_nevera,
-                            imei: selectedAlert.alert_dis_imei,
+                            imei: selectedAlert.alert_dis_imei,  
                             latitud: selectedAlert.alert_dis_lat,
                             longitud: selectedAlert.alert_dis_lon,
+                            alert_evento: selectedAlert.alert_evento
                         }
                         : null
                 }

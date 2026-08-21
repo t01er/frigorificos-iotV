@@ -24,7 +24,17 @@ export interface PaginacionFilters {
 
 export interface DashboardContadoresFilters {
   distribuidor?: string;
+  cod_nevera?: string;
+  imei?: string;
+  locacion?: string;
   estado?: number;
+}
+
+export interface EventosDashboardFilters {
+  cod_nevera?: string;
+  distribuidor?: string;
+  imei?: string;
+  locacion?: string;
 }
 
 
@@ -171,7 +181,7 @@ export interface CoordenadaMovimiento {
   fechaRegistroDis: string;
   movCodNevera: string;
   movDistribuidor: string;
-  movBateria: string;
+  movBateria: number;
   movSignal: string;
 }
 
@@ -248,9 +258,12 @@ export const mapApi = apiSlice.injectEndpoints({
     getDashboardContadores: builder.query<DashboardContadoresResponse, DashboardContadoresFilters>({
       query: (filters = {}) => {
         const params = new URLSearchParams();
-        if (filters.distribuidor) {
-          params.append('distribuidor', filters.distribuidor);
-        }
+        if (filters.distribuidor) params.append('distribuidor', filters.distribuidor);
+        if (filters.cod_nevera) params.append('cod_nevera', filters.cod_nevera);
+        if (filters.imei) params.append('imei', filters.imei);
+        if (filters.locacion) params.append('locacion', filters.locacion);
+        if (filters.estado != null) params.append('estado', String(filters.estado));
+
         return {
           url: `${API_NESTLE}/api/Consultas/nestleContadoresDashboardv2`,
           params: params.toString() ? params : undefined,
@@ -323,11 +336,20 @@ export const mapApi = apiSlice.injectEndpoints({
           _size: size,
         },
       }),
-    }),
-    getEventosDashboardPorDistribuidor: builder.query<EventosDashboardResponse, void>({
-      query: () => ({
-        url: `${API_NESTLE}/api/Consultas/eventosDashboardPorDistribuidor`,
-      }),
+    }),    
+    getEventosDashboardPorDistribuidor: builder.query<EventosDashboardResponse, EventosDashboardFilters>({
+      query: (filters = {}) => {
+        const params = new URLSearchParams();
+        if (filters.cod_nevera) params.append('cod_nevera', filters.cod_nevera);
+        if (filters.distribuidor) params.append('distribuidor', filters.distribuidor);
+        if (filters.imei) params.append('imei', filters.imei);
+        if (filters.locacion) params.append('locacion', filters.locacion);
+
+        return {
+          url: `${API_NESTLE}/api/Consultas/eventosDashboardPorDistribuidor`,
+          params: params.toString() ? params : undefined,
+        };
+      },
     }),
     getMovimientosDispositivo: builder.query<MovimientosDispositivoResponse, string>({
       query: (imei) => ({

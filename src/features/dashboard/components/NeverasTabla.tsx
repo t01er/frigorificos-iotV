@@ -161,10 +161,11 @@ export default function NeverasTabla({
 
     const columns: CustomColumnDef<NeveraDashboardItem>[] = useMemo(
         () => [
-            { key: "dis_cod_nevera", label: "Código Nevera", width: 130, sticky: true },
+            { key: "dis_cod_nevera", label: "Código Nevera", width: 130, sticky: true, sortable: false },
             {
                 key: "dis_imei",
                 label: "IMEI",
+                sortable: false,
                 width: 150,
                 sticky: true,
                 render: (item) => (
@@ -178,15 +179,15 @@ export default function NeverasTabla({
                     </button>
                 ),
             },
-            { key: "loc_nombre", label: "Locación", width: 150 },
-            { key: "dis_distribuidor", label: "Distribuidor", width: 130 },
-            { key: "dis_sincronizado", label: "Sincronizado", width: 120 },
-
-            { key: "dis_ult_conex", label: "Última Transmisión", width: 150 },
+            { key: "loc_nombre", label: "Locación", width: 150, sortable: false, },
+            { key: "dis_distribuidor", label: "Distribuidor", width: 130, sortable: false, },
+            { key: "dis_sincronizado", label: "Sincronizado", width: 120, sortable: false, },
+            { key: "dis_ult_conex", label: "Última Transmisión", width: 150, sortable: true, },
 
             {
                 key: "dis_latitud_actual",
                 label: "Latitud",
+                sortable: false,
                 width: 130,
                 render: (item) => (
                     <button
@@ -202,6 +203,7 @@ export default function NeverasTabla({
             {
                 key: "dis_longitud_actual",
                 label: "Longitud",
+                sortable: false,
                 width: 130,
                 render: (item) => (
                     <button
@@ -214,33 +216,33 @@ export default function NeverasTabla({
                 ),
             },
 
-            { key: "dis_estado", label: "Estado", width: 170 },
-            { key: "dis_movimiento", label: "Movimiento", width: 110 },
-            { key: "dis_bateria", label: "Batería", width: 100 },
-            { key: "dis_energia", label: "Energía", width: 110 },
-            { key: "dis_desconexiones", label: "Desconexiones", width: 130 },
-            { key: "dis_senial_celular", label: "Señal Celular", width: 120 },
-            { key: "dis_senial_gps", label: "Señal GPS", width: 120 },
+            { key: "dis_estado", label: "Estado", width: 170, sortable: false, },
+            { key: "dis_movimiento", label: "Movimiento", width: 110, sortable: true, },
+            { key: "dis_bateria", label: "Batería", width: 100, sortable: true, },
+            { key: "dis_energia", label: "Energía", width: 110, sortable: false, },
+            { key: "dis_desconexiones", label: "Desconexiones", width: 130, sortable: false, },
+            { key: "dis_senial_celular", label: "Señal Celular", width: 120, sortable: false, },
+            { key: "dis_senial_gps", label: "Señal GPS", width: 120, sortable: false, },
 
-            { key: "dis_fecha_instalacion", label: "Fecha", width: 150 },
-            { key: "dis_latitud_inst", label: "Latitud", width: 110 },
-            { key: "dis_longitud_inst", label: "Longitud", width: 110 },
-            { key: "dis_distancia_km_instalacion", label: "Distancia KM", width: 150 },
+            { key: "dis_fecha_instalacion", label: "Fecha", width: 150, sortable: false, },
+            { key: "dis_latitud_inst", label: "Latitud", width: 110, sortable: false, },
+            { key: "dis_longitud_inst", label: "Longitud", width: 110, sortable: false, },
+            { key: "dis_distancia_km_instalacion", label: "Distancia KM", width: 150, sortable: false, },
 
-            { key: "dis_cliente_codigo", label: "Código Cliente", width: 130 },
-            { key: "dis_cliente_nombre", label: "Cliente", width: 150 },
-            { key: "dis_fecha_censo", label: "Fecha", width: 150 },
-            { key: "dis_latitud_censo", label: "Latitud", width: 110 },
-            { key: "dis_longitud_censo", label: "Longitud", width: 110 },
-            { key: "dis_distancia_km_censo", label: "Distancia KM", width: 150 },
+            { key: "dis_cliente_codigo", label: "Código Cliente", width: 130, sortable: false, },
+            { key: "dis_cliente_nombre", label: "Cliente", width: 150, sortable: false, },
+            { key: "dis_fecha_censo", label: "Fecha", width: 150, sortable: false, },
+            { key: "dis_latitud_censo", label: "Latitud", width: 110, sortable: false, },
+            { key: "dis_longitud_censo", label: "Longitud", width: 110, sortable: false, },
+            { key: "dis_distancia_km_censo", label: "Distancia KM", width: 150, sortable: false, },
 
-            { key: "dis_fecha_cartera", label: "Fecha", width: 150 },
-            { key: "dis_latitud_cartera", label: "Latitud", width: 110 },
-            { key: "dis_longitud_cartera", label: "Longitud", width: 110 },
-            { key: "dis_distancia_km_cartera", label: "Distancia KM", width: 150 },
-            { key: "dis_iccid", label: "ICCID", width: 150 },
+            { key: "dis_fecha_cartera", label: "Fecha", width: 150, sortable: false, },
+            { key: "dis_latitud_cartera", label: "Latitud", width: 110, sortable: false, },
+            { key: "dis_longitud_cartera", label: "Longitud", width: 110, sortable: false, },
+            { key: "dis_distancia_km_cartera", label: "Distancia KM", width: 150, sortable: false, },
+            { key: "dis_iccid", label: "ICCID", width: 150, sortable: false, },
 
-            
+
         ],
         [handleOpenMap, handleOpenRecorrido]
     );

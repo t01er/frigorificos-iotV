@@ -78,6 +78,7 @@ export const apiSlice = createApi({
     'Products',
     'Device',
     'Devices',
+    'CorreosNestle'
   ],
   endpoints: () => ({}),
 });

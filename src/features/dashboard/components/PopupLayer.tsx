@@ -116,7 +116,7 @@ export default function PopupLayer({ codigo }: Props) {
               <Info label="Batería" value={`${nevera.bateria}`} icon={<BatteryFull />} />
             )}           
             {nevera.energia && (
-              <Info label="energia" value={`${nevera.energia}`} icon={<Bolt />} />
+              <Info label="Energía" value={`${nevera.energia}`} icon={<Bolt />} />
             )}
             {nevera.ultima_transmision && (
               <Info label="Última Transmisión" value={nevera.ultima_transmision} icon={<ClockCircle />} />
@@ -157,13 +157,3 @@ export default function PopupLayer({ codigo }: Props) {
   );
 }
 
-//  "cod_nevera": "22A0469409",
-//         "imei": "860879070699869",
-//         "distribuidor": "KALLPA",
-//         "ubicacion": "Lat. -11.839070 Long. -76.377405",
-//         "bateria": "75%",
-//         "cod_cliente": "079001017517001",
-//         "energia": "Conectado",
-//         "ultima_transmision": "2026-08-17 21:58:39",
-//         "status": "Operativo - Cartera",
-//         "numero_ticket_mtto": "0"

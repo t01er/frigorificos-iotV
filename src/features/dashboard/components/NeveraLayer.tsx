@@ -4,7 +4,7 @@ import type { Feature, GeoJsonProperties, Point } from "geojson";
 import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import { store } from "../../../app/store";
-import NeveraPopup from "./PopupLayer";
+import PopupLayer from "./PopupLayer";
 
 interface Nevera {
   cod_nevera: string;
@@ -171,7 +171,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         const root = createRoot(container);
         root.render(
           <Provider store={store}>
-            <NeveraPopup codigo={props.codigo} />
+            <PopupLayer codigo={props.codigo} />
           </Provider>
         );
 

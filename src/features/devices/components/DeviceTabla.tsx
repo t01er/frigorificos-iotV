@@ -146,8 +146,7 @@ export default function DeviceTabla() {
             { key: "dis_latitud", label: "Latitud", width: 130 },
             { key: "dis_longitud", label: "Longitud", width: 130 },
             { key: "dis_geozona", label: "Geozona", width: 130 },
-            { key: "dis_movimiento", label: "Movimiento", width: 130 },
-            { key: "dis_iccid", label: "ICCID", width: 130 },
+            { key: "dis_movimiento", label: "Movimiento", width: 130 },           
             {
                 key: "dis_estado",
                 label: "Estado",
@@ -169,6 +168,7 @@ export default function DeviceTabla() {
             },
             { key: "dis_version", label: "Versión", width: 130 },
             { key: "dis_cliente", label: "Cliente", width: 130 },
+             { key: "dis_iccid", label: "ICCID", width: 130 },
             {
                 key: "acciones",
                 label: "Acciones",

@@ -80,7 +80,7 @@ export default function TableComponent<T extends Record<string, any>>({
   page,
   pageSize,
   totalRegistros,
-  pageSizeOptions = [15, 25, 50, 100],
+  pageSizeOptions = [15, 25, 50, 100, 500],
   onPageChange,
   onPageSizeChange,
   isLoading,
@@ -210,7 +210,7 @@ export default function TableComponent<T extends Record<string, any>>({
               <Input
                 key={f.key}
                 size="md"
-                radius="md"             
+                radius="md"
                 className="w-40"
                 placeholder={f.placeholder ?? f.key}
                 startContent={<Magnifer size={14} className="text-default-400" />}
