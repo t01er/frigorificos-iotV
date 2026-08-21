@@ -125,11 +125,9 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
     const roots: Root[] = [];
     let activePopup: mapboxgl.Popup | null = null;
 
-    // ============ PUNTOS DE CONTROL (MIGRADOS A GEOJSON) ============
     const puntosControlSourceId = "puntos-control-source";
     const puntosControlLayerId = "puntos-control-layer";
     
-    // Crear features para puntos de control
     const puntosControlFeatures: GeoJSON.Feature[] = puntosControl
       .map((pc) => {
         const lng = parseFloat(pc.longitud);
@@ -172,7 +170,6 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
       features: puntosControlFeatures,
     };
 
-    // ============ CÍRCULOS DE RADIO (MIGRADOS A GEOJSON) ============
     const controlCirclesSourceId = "control-circles-source";
     const controlCirclesFillLayerId = "control-circles-fill";
     const controlCirclesLineLayerId = "control-circles-line";
@@ -201,7 +198,6 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
       features: circleFeatures,
     };
 
-    // ============ COORDENADAS DEL RECORRIDO ============
     const coordenadasSourceId = "coordenadas-source";
     const coordenadasNormalLayerId = "coordenadas-normal-layer";
     const coordenadasFinLayerId = "coordenadas-fin-layer";
@@ -269,9 +265,6 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
       features: coordenadasFeatures,
     };
 
-    // ============ AGREGAR FUENTES Y CAPAS ============
-    
-    // 1. Agregar fuente de puntos de control
     if (map.getSource(puntosControlSourceId)) {
       (map.getSource(puntosControlSourceId) as mapboxgl.GeoJSONSource).setData(puntosControlGeojson);
     } else {
@@ -279,8 +272,6 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
         type: "geojson",
         data: puntosControlGeojson,
       });
-
-      // Capa de puntos de control
       map.addLayer({
         id: puntosControlLayerId,
         type: "circle",
@@ -580,7 +571,6 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
       map.moveLayer(coordenadasNormalLayerId);
     }
 
-    // ============ AJUSTAR VISTA ============
     const allPoints = [
       ...lineCoords,
       ...puntosControl.map((pc) => [parseFloat(pc.longitud), parseFloat(pc.latitud)]),
