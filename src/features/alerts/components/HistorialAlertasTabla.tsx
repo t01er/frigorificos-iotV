@@ -79,7 +79,7 @@ export default function HistorialAlertasTabla({
         _imei: "",
         _locacion: "",
         _or: "desc",
-        _order: "dis_ult_conex",
+        _order: "alert_dis_fechahora",
         _page: 1,
         _size: PAGE_SIZE_DEFAULT,
     };
@@ -93,7 +93,7 @@ export default function HistorialAlertasTabla({
     const [sortDescriptor, setSortDescriptor] = useState<{
         column: string;
         direction: "ascending" | "descending";
-    }>({ column: "dis_ult_conex", direction: "descending" });
+    }>({ column: "alert_dis_fechahora", direction: "descending" });
 
     const [startDate, setStartDate] = useState<DateValue | null>(threeMonthsAgo);
     const [endDate, setEndDate] = useState<DateValue | null>(today);
