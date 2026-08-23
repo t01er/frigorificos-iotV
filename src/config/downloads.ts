@@ -30,6 +30,14 @@ export const DOWNLOAD_CONFIGS = {
         rolesPermitidos: ["adminnestle", "usuarionestle2", "adminentel"],
         fileName: "HistorialAlertas.zip",
     },
+    bitacora: {
+        url: `${API_NESTLE}/api/Consultas/descargarBitacoraCompletaExcelEntel`,
+        label: "Bitacora",
+        tooltip: "Descargar Bitacora",
+        color: "success" as const,
+        rolesPermitidos: ["adminnestle", "usuarionestle2", "adminentel"],
+    }
+
 };
 
 export type DownloadKey = keyof typeof DOWNLOAD_CONFIGS;

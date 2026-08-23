@@ -361,6 +361,13 @@ export default function NeverasTabla({
                             color="primary"
                             rolesPermitidos={DOWNLOAD_CONFIGS.cartera.rolesPermitidos}
                         />
+                        <DownloadButton
+                            url={DOWNLOAD_CONFIGS.bitacora.url}
+                            label="Bitacora"
+                            tooltip="Descargar Bitacora"
+                            color="default"
+                            rolesPermitidos={DOWNLOAD_CONFIGS.bitacora.rolesPermitidos}
+                        />
                     </div>
 
                 }

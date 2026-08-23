@@ -51,8 +51,7 @@ export const useDownload = (options: UseDownloadOptions): UseDownloadReturn => {
             const fetchOptions: RequestInit = {
                 method,
                 headers: fetchHeaders,
-                // Timeout extendido a 10 minutos
-                signal: AbortSignal.timeout(600000), // 10 minutos
+                signal: AbortSignal.timeout(600000), 
             };
 
             if (body) {
