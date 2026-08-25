@@ -3,12 +3,11 @@ import TableComponent, {
     type CustomColumnDef,
     type FilterFieldDef,
 } from "../../../components/ux/TableComponent";
-import { useGetUsersQuery, type UserItem } from "../services/userApi";
-import { Avatar, Chip, Button } from "@heroui/react";
+import { useEliminarUsuarioEntelMutation, useEliminarUsuarioNestleMutation, useGetUsersQuery, type UserItem } from "../services/userApi";
 import ModalUsuarioNuevo from "./ModalUsuarioNuevo";
 import * as XLSX from 'xlsx';
 import { InboxIn, PenNewSquare, TrashBinTrash } from "@solar-icons/react";
-
+import { Avatar, Chip, Button } from "@heroui/react";
 const PAGE_SIZE_DEFAULT = 15;
 
 export default function UsersTabla() {
@@ -31,6 +30,8 @@ export default function UsersTabla() {
     const [isExporting, setIsExporting] = useState(false);
 
     const { data, isLoading, isFetching, refetch } = useGetUsersQuery();
+    const [eliminarUsuarioNestle] = useEliminarUsuarioNestleMutation();
+    const [eliminarUsuarioEntel] = useEliminarUsuarioEntelMutation();
 
     const allUsers = data?.data ?? [];
 
@@ -44,6 +45,7 @@ export default function UsersTabla() {
     useEffect(() => {
         handleReload();
     }, [handleReload, reloadData]);
+
 
     const filteredUsers = useMemo(() => {
         let result = [...allUsers];
@@ -167,6 +169,21 @@ export default function UsersTabla() {
         }
     }, []);
 
+    const handleDeleteUser = useCallback(async (user: UserItem) => {
+        if (!window.confirm(`¿Eliminar al usuario "${user.usu_usuario}"? Esta acción no se puede deshacer.`)) {
+            return;
+        }
+        try {
+            await Promise.all([
+                eliminarUsuarioNestle(user.usu_usuario).unwrap(),
+                eliminarUsuarioEntel(user.usu_usuario).unwrap(),
+            ]);
+            setReloadData(true);
+        } catch (error) {
+            console.error("Error al eliminar usuario:", error);
+        }
+    }, [eliminarUsuarioNestle, eliminarUsuarioEntel]);
+
     const columns: CustomColumnDef<UserItem>[] = useMemo(
         () => [
             {
@@ -254,11 +271,10 @@ export default function UsersTabla() {
                             size="sm"
                             variant="light"
                             color="danger"
-                            startContent={
-                                <TrashBinTrash size={18} />
-                            }
+                            onPress={() => handleDeleteUser(item)}
+                            startContent={<TrashBinTrash size={18} />}
                         >
-                            Editar
+                            Eliminar
                         </Button>
                     </div>
                 ),

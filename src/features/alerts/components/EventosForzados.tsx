@@ -163,19 +163,19 @@ export default function EventosForzados() {
                     label: "ID",
                     width: 80,
                     align: "center",
-                    sortable: true,
+                    sortable: false,                    
                 },
                 {
                     key: "codNevera",
                     label: "Cod. Nevera",
                     width: 150,
-                    sortable: true,
+                    sortable: false,
                 },
                 {
                     key: "estadoEvento",
                     label: "Evento",
                     width: 180,
-                    sortable: true,
+                    sortable: false,
                     render: (item) => {
                         const evento =
                             item.estadoEvento?.toLowerCase();
@@ -212,7 +212,7 @@ export default function EventosForzados() {
                     key: "estadoAnterior",
                     label: "Estado anterior",
                     width: 180,
-                    sortable: true,
+                    sortable: false,
                     render: (item) => (
                         <span className="text-sm">
                             {item.estadoAnterior || "-"}
@@ -223,7 +223,7 @@ export default function EventosForzados() {
                     key: "estadoNuevo",
                     label: "Estado nuevo",
                     width: 150,
-                    sortable: true,
+                    sortable: false,
                     render: (item) => (
                         <Chip
                             size="sm"
@@ -258,7 +258,7 @@ export default function EventosForzados() {
                     key: "origen",
                     label: "Origen",
                     width: 120,
-                    sortable: true,
+                    sortable: false,
                     align: "center",
                     render: (item) => (
                         <Chip
@@ -274,7 +274,7 @@ export default function EventosForzados() {
                     key: "alertasHabilitadas",
                     label: "Alertas",
                     width: 120,
-                    sortable: true,
+                    sortable: false,
                     align: "center",
                     render: (item) => (
                         <Chip

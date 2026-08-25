@@ -31,9 +31,7 @@ export interface UserFilters {
     _tipo?: string;
 }
 
-// ============ REQUEST INTERFACES ============
 
-// Para REGISTRAR (POST)
 export interface RegistrarUsuarioRequest {
     usu_empresa: number;
     usu_nombre: string;
@@ -47,7 +45,6 @@ export interface RegistrarUsuarioRequest {
     usu_lista_distribuidores?: number[];
 }
 
-// Para ACTUALIZAR (POST)
 export interface ActualizarUsuarioRequest {
     usu_id: number;
     usu_empresa: number;
@@ -56,7 +53,7 @@ export interface ActualizarUsuarioRequest {
     usu_telefono: string;
     usu_cargo: string;
     usu_usuario: string;
-    usu_contrasena?: string; // Opcional en edición
+    usu_contrasena?: string; 
     usu_tipo: string;
     usu_estado: string;
     usu_lista_distribuidores?: number[];
@@ -211,11 +208,25 @@ export const userApi = apiSlice.injectEndpoints({
                 };
             },
         }),
+        eliminarUsuarioNestle: builder.mutation<RegistrarUsuarioResponse, string>({
+            query: (usuario) => ({
+                url: `${API_NESTLE}/api/Consultas/eliminarUsuarioNestle?_usuario=${encodeURIComponent(usuario)}`,
+                method: "POST",
+            }),
+            invalidatesTags: ['Users'],
+        }),
+
+        eliminarUsuarioEntel: builder.mutation<RegistrarUsuarioResponse, string>({
+            query: (usuario) => ({
+                url: `${API_ENTEL_CORE}/api/Consultas/eliminarUsuario?_usuario=${encodeURIComponent(usuario)}`,
+                method: "POST",
+            }),
+            invalidatesTags: ['Users'],
+        }),
     }),
     overrideExisting: false,
 });
 
-// ============ EXPORTS ============
 export const {
     useGetUsersQuery,
     useGetUserByIdQuery,
@@ -226,6 +237,7 @@ export const {
     useRegistrarUsuarioEntelMutation,
     useActualizarUsuarioNestleMutation,
     useActualizarUsuarioEntelMutation,
-    useEliminarUsuarioMutation,
+    useEliminarUsuarioNestleMutation,
+    useEliminarUsuarioEntelMutation,
     useCambiarEstadoUsuarioMutation,
 } = userApi;
