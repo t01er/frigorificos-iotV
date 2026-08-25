@@ -5,6 +5,7 @@ import HistorialAlertasTabla from "../components/HistorialAlertasTabla";
 import CorreosNestleTabla from "../components/CorreosNestleTabla";
 
 import { Accordion, AccordionItem } from "@heroui/react";
+import EventosForzados from "../components/EventosForzados";
 
 export default function Alerts() {
   const [totalHistorial, setTotalHistorial] = useState(0);
@@ -52,6 +53,19 @@ export default function Alerts() {
         >
           <HistorialAlertasTabla onTotalChange={setTotalHistorial} />
         </AccordionItem>
+        <AccordionItem
+          key="4"
+          aria-label="Eventos"
+          title="Eventos"
+          classNames={{
+            base: "p-0 overflow-hidden",
+            heading: "p-0",
+            trigger: "bg-primary px-4 py-3 rounded-none",
+            title: "text-white",
+          }}
+        >
+          <EventosForzados />
+        </AccordionItem>
 
         <AccordionItem
           key="3"
@@ -66,6 +80,7 @@ export default function Alerts() {
         >
           <CorreosNestleTabla />
         </AccordionItem>
+
       </Accordion>
     </PageContainer>
   );

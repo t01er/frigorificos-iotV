@@ -18,6 +18,43 @@ export interface AlertsItem {
     alert_dis_cliente: string;
 }
 
+export interface EventoForzadoItem {
+    id(id: any): string;
+    cod_nevera: string;
+    evento: string;
+    estado_anterior: string;
+    estado_nuevo: string;
+    detalle: string;
+    fecha: string;
+    alertasHabilitadas: number,
+    origen: string,
+    estadoNuevo: string,
+    estadoAnterior: string,
+    estadoEvento: string,
+}
+
+export interface EventosForzadosFilters {
+    cod_nevera?: string;
+    evento?: string;
+    estado_anterior?: string;
+    estado_nuevo?: string;
+    detalle?: string;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    or?: string;
+    order?: string;
+    page?: number;
+    size?: number;
+}
+
+export interface EventosForzadosResponse {
+    status: boolean;
+    message?: string;
+    totalRegistros?: number;
+    total_records?: number;
+    data: EventoForzadoItem[];
+}
+
 export interface CorreosNestleResponse {
     status: boolean;
     message?: string;
@@ -167,6 +204,28 @@ export const alertsApi = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['CorreosNestle'],
         }),
+        getEventosForzados: builder.query<
+            EventosForzadosResponse,
+            EventosForzadosFilters
+        >({
+            query: (filters) => ({
+                url: `${API_NESTLE}/api/Consultas/listaEventosForzados`,
+                method: "POST",
+                body: {
+                    cod_nevera: filters.cod_nevera ?? "",
+                    evento: filters.evento ?? "",
+                    estado_anterior: filters.estado_anterior ?? "",
+                    estado_nuevo: filters.estado_nuevo ?? "",
+                    detalle: filters.detalle ?? "",
+                    fecha_inicio: filters.fecha_inicio ?? "",
+                    fecha_fin: filters.fecha_fin ?? "",
+                    or: filters.or ?? "desc",
+                    order: filters.order ?? "",
+                    page: filters.page ?? 1,
+                    size: filters.size ?? 10,
+                },
+            }),
+        }),
 
     }),
     overrideExisting: false,
@@ -179,6 +238,7 @@ export const {
     useGetAlertsHistoricalCountV2Query,
     useGetCorreosNestleQuery,
     useCreateCorreoNestleMutation,
+    useGetEventosForzadosQuery,
 } = alertsApi;
 
 
