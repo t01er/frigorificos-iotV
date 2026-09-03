@@ -370,10 +370,12 @@ export default function HistorialAlertasTabla({
             _imei: appliedFilters._imei || "",
             _locacion: appliedFilters._locacion || "",
             _cliente: appliedFilters._cliente || "",
+            _or: sortDescriptor.direction === "ascending" ? "asc" : "desc",
+            _order: sortDescriptor.column,
             _size: 20,
             _page: 1,
         };
-    }, [appliedFilters, getFechaInicio, getFechaFin]);
+    }, [appliedFilters, getFechaInicio, getFechaFin, sortDescriptor]);
 
     return (
         <div>

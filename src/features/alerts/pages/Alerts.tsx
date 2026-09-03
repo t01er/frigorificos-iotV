@@ -38,7 +38,6 @@ export default function Alerts() {
           title={
             <div className="flex items-center gap-2">
               <span>Historial de eventos de los últimos 3 meses</span>
-
               <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
                 {totalHistorial}
               </span>
