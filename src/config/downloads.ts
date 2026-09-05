@@ -36,8 +36,16 @@ export const DOWNLOAD_CONFIGS = {
         tooltip: "Descargar Bitacora",
         color: "success" as const,
         rolesPermitidos: ["adminnestle", "usuarionestle2", "adminentel"],
+    },
+    neverasDashboard: {
+        url: `${API_NESTLE}/api/Consultas/listaGeneralNeverasDashboardV2Excel`,
+        label: "Neveras",
+        tooltip: "Descargar lista general de neveras",
+        color: "primary" as const,
+        rolesPermitidos: ["adminnestle", "usuarionestle2", "adminentel"],
+        fileName: "NeverasDashboard.xlsx",
+        method: "POST" as const,
     }
-
 };
 
 export type DownloadKey = keyof typeof DOWNLOAD_CONFIGS;

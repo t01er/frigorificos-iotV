@@ -159,6 +159,27 @@ export default function NeverasTabla({
 
     const neveras = data?.data ?? [];
 
+    const getDownloadPayload = useCallback(() => {
+        return {
+            _cod_nevera: filterValues.cod_nevera || "",
+            _imei: filterValues.imei || "",
+            _locacion: filterValues.locacion || "",
+            _distribuidor: filterValues.distribuidor || "",
+            _estado: filterValues.estado || "",
+            _movimiento: "",
+            _order: sortDescriptor.column,
+            _or: sortDescriptor.direction === "descending" ? "desc" : "asc",
+            _page: 1,
+            _size: 9999
+        };
+    }, [filterValues, sortDescriptor]);
+
+    const [downloadBody, setDownloadBody] = useState(getDownloadPayload());
+
+    useEffect(() => {
+        setDownloadBody(getDownloadPayload());
+    }, [getDownloadPayload]);
+
     const columns: CustomColumnDef<NeveraDashboardItem>[] = useMemo(
         () => [
             { key: "dis_cod_nevera", label: "Código Nevera", width: 130, sticky: true, sortable: false },
@@ -313,6 +334,7 @@ export default function NeverasTabla({
         },
     ];
 
+
     const handleClearFilters = () => {
         setFilterValues({
             cod_nevera: "",
@@ -368,8 +390,17 @@ export default function NeverasTabla({
                             color="default"
                             rolesPermitidos={DOWNLOAD_CONFIGS.bitacora.rolesPermitidos}
                         />
+                        <DownloadButton
+                            url={DOWNLOAD_CONFIGS.neverasDashboard.url}
+                            label="Neveras"
+                            tooltip="Descargar lista general de neveras"
+                            color="primary"
+                            rolesPermitidos={DOWNLOAD_CONFIGS.neverasDashboard.rolesPermitidos}
+                            fileName={DOWNLOAD_CONFIGS.neverasDashboard.fileName}
+                            method="POST"
+                            body={downloadBody}
+                        />
                     </div>
-
                 }
                 page={page}
                 pageSize={pageSize}
