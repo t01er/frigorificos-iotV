@@ -33,7 +33,6 @@ const getMonthsDifference = (startDate: DateValue, endDate: DateValue): number =
     let months = (end.getFullYear() - start.getFullYear()) * 12;
     months += end.getMonth() - start.getMonth();
 
-    // Si el día del mes es menor, restamos un mes
     if (end.getDate() < start.getDate()) {
         months--;
     }
@@ -62,6 +61,11 @@ const getThreeMonthsAgo = (today: DateValue): DateValue => {
     return new CalendarDate(year, month, day);
 };
 
+const hasActiveFilters = (filters: AlertsHistorialFilters): boolean => {
+    const { _fecha_inicio, _fecha_fin, ...otherFilters } = filters;
+    return Object.values(otherFilters).some(value => value && value.toString().trim() !== '');
+};
+
 export default function HistorialAlertasTabla({
     onTotalChange,
 }: HistorialAlertasTablaProps) {
@@ -86,7 +90,6 @@ export default function HistorialAlertasTabla({
 
     const [draftFilters, setDraftFilters] = useState<AlertsHistorialFilters>(initialFilters);
     const [appliedFilters, setAppliedFilters] = useState<AlertsHistorialFilters>(initialFilters);
-
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
@@ -209,14 +212,21 @@ export default function HistorialAlertasTabla({
         _cod_nevera: appliedFilters._cod_nevera,
         _distribuidor: appliedFilters._distribuidor,
         _evento: appliedFilters._evento,
-        _fecha_inicio: appliedFilters._fecha_inicio,
-        _fecha_fin: appliedFilters._fecha_fin,
+        _fecha_inicio: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_inicio,
+        _fecha_fin: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_fin,
         _imei: appliedFilters._imei,
         _locacion: appliedFilters._locacion,
     };
 
     const queryFilters: AlertsHistorialFilters = {
-        ...countFilters,
+        _cliente: appliedFilters._cliente,
+        _cod_nevera: appliedFilters._cod_nevera,
+        _distribuidor: appliedFilters._distribuidor,
+        _evento: appliedFilters._evento,
+        _fecha_inicio: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_inicio,
+        _fecha_fin: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_fin,
+        _imei: appliedFilters._imei,
+        _locacion: appliedFilters._locacion,
         _or: sortDescriptor.direction === "ascending" ? "asc" : "desc",
         _order: sortDescriptor.column,
         _page: page,
@@ -232,7 +242,6 @@ export default function HistorialAlertasTabla({
     useEffect(() => {
         onTotalChange?.(totalRegistros);
     }, [totalRegistros, onTotalChange]);
-
 
     const columns: CustomColumnDef<AlertsItem>[] = useMemo(
         () => [
@@ -361,12 +370,14 @@ export default function HistorialAlertasTabla({
     }, [endDate]);
 
     const getDownloadBody = useCallback(() => {
+        // Para la descarga, también excluimos fechas si hay otros filtros activos
+        const hasFilters = hasActiveFilters(appliedFilters);
         return {
             _cod_nevera: appliedFilters._cod_nevera || "",
             _distribuidor: appliedFilters._distribuidor || "",
             _evento: appliedFilters._evento || "",
-            _fecha_inicio: appliedFilters._fecha_inicio || getFechaInicio(),
-            _fecha_fin: appliedFilters._fecha_fin || getFechaFin(),
+            _fecha_inicio: hasFilters ? "" : (appliedFilters._fecha_inicio || getFechaInicio()),
+            _fecha_fin: hasFilters ? "" : (appliedFilters._fecha_fin || getFechaFin()),
             _imei: appliedFilters._imei || "",
             _locacion: appliedFilters._locacion || "",
             _cliente: appliedFilters._cliente || "",

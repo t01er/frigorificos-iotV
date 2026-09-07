@@ -153,7 +153,7 @@ export default function TableComponent<T extends Record<string, any>>({
               return (
                 <DateRangePicker
                   key={f.key}
-                  size="md"
+                  size="sm"
                   radius="md"
                   className="w-72"
                   aria-label={f.placeholder ?? "Rango de fechas"}
@@ -181,10 +181,11 @@ export default function TableComponent<T extends Record<string, any>>({
               return (
                 <DatePicker
                   key={f.key}
-                  size="md"
+                  size="sm"
                   radius="md"
                   className="w-52"
                   aria-label={f.placeholder ?? "Fecha Inicio"}
+                  label="Fecha Inicio"
                   value={startDateValue as any}
                   onChange={onStartDateChange as any}
                   granularity="day"
@@ -196,9 +197,10 @@ export default function TableComponent<T extends Record<string, any>>({
               return (
                 <DatePicker
                   key={f.key}
-                  size="md"
+                  size="sm"
                   radius="md"
                   className="w-52"
+                  label="Fecha fin"
                   aria-label={f.placeholder ?? "Fecha Fin"}
                   value={endDateValue as any}
                   onChange={onEndDateChange as any}

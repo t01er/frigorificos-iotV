@@ -20,6 +20,12 @@ const formatDate = (date: DateValue | null) => {
     return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
 };
 
+// Función para verificar si hay filtros activos (excluyendo fecha)
+const hasActiveFilters = (filters: AlertsFilters): boolean => {
+    const { _fecha_hora, ...otherFilters } = filters;
+    return Object.values(otherFilters).some(value => value && value.toString().trim() !== '');
+};
+
 export default function AlertsTabla() {
     const today = useTodayDate();
     const initialDateStr = formatDate(today);
@@ -58,18 +64,28 @@ export default function AlertsTabla() {
         direction: "ascending" | "descending";
     }>({ column: "dis_ult_conex", direction: "descending" });
 
+    // Construir los filtros para el conteo
     const countFilters: AlertsFilters = {
         _cliente: appliedFilters._cliente,
         _cod_nevera: appliedFilters._cod_nevera,
         _distribuidor: appliedFilters._distribuidor,
         _evento: appliedFilters._evento,
-        _fecha_hora: appliedFilters._fecha_hora,
+        // Solo incluir fecha si NO hay otros filtros activos
+        _fecha_hora: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_hora,
         _imei: appliedFilters._imei,
         _locacion: appliedFilters._locacion,
     };
 
+    // Construir los filtros para la consulta principal
     const queryFilters: AlertsFilters = {
-        ...countFilters,
+        _cliente: appliedFilters._cliente,
+        _cod_nevera: appliedFilters._cod_nevera,
+        _distribuidor: appliedFilters._distribuidor,
+        _evento: appliedFilters._evento,
+        // Solo incluir fecha si NO hay otros filtros activos
+        _fecha_hora: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_hora,
+        _imei: appliedFilters._imei,
+        _locacion: appliedFilters._locacion,
         _or: sortDescriptor.direction === "ascending" ? "asc" : "desc",
         _order: sortDescriptor.column,
         _page: page,
@@ -106,7 +122,7 @@ export default function AlertsTabla() {
             { key: "alert_dis_imei", label: "IMEI", width: 130, sortable: false },
             { key: "alert_dis_distribuidor", label: "Distribuidor", width: 130, sortable: false },
             { key: "alert_dis_fechahora", label: "Fecha Evento", width: 130, sortable: true },
-             {
+            {
                 key: "alert_evento",
                 label: "Evento",
                 width: 130,
@@ -197,7 +213,6 @@ export default function AlertsTabla() {
             },
             { key: "alert_dis_signal", label: "Señal", width: 130, sortable: false },
             { key: "alert_dis_satelite", label: "Satélite", width: 130, sortable: false },
-           
             { key: "alert_movimiento", label: "Movimiento", width: 130, sortable: false },
             { key: "alert_dis_cliente", label: "Cliente", width: 130, sortable: false },
         ],
@@ -264,7 +279,6 @@ export default function AlertsTabla() {
                 isLoading={isLoading || isFetching || isCountLoading}
             />
 
-
             <MapModal
                 isOpen={isMapModalOpen}
                 onClose={() => {
@@ -275,7 +289,7 @@ export default function AlertsTabla() {
                     selectedAlert
                         ? {
                             cod_nevera: selectedAlert.alert_dis_cod_nevera,
-                            imei: selectedAlert.alert_dis_imei,  
+                            imei: selectedAlert.alert_dis_imei,
                             latitud: selectedAlert.alert_dis_lat,
                             longitud: selectedAlert.alert_dis_lon,
                             alert_evento: selectedAlert.alert_evento
