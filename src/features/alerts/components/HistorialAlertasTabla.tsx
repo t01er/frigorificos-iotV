@@ -61,11 +61,6 @@ const getThreeMonthsAgo = (today: DateValue): DateValue => {
     return new CalendarDate(year, month, day);
 };
 
-const hasActiveFilters = (filters: AlertsHistorialFilters): boolean => {
-    const { _fecha_inicio, _fecha_fin, ...otherFilters } = filters;
-    return Object.values(otherFilters).some(value => value && value.toString().trim() !== '');
-};
-
 export default function HistorialAlertasTabla({
     onTotalChange,
 }: HistorialAlertasTablaProps) {
@@ -212,8 +207,8 @@ export default function HistorialAlertasTabla({
         _cod_nevera: appliedFilters._cod_nevera,
         _distribuidor: appliedFilters._distribuidor,
         _evento: appliedFilters._evento,
-        _fecha_inicio: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_inicio,
-        _fecha_fin: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_fin,
+        _fecha_inicio: appliedFilters._fecha_inicio,
+        _fecha_fin: appliedFilters._fecha_fin,
         _imei: appliedFilters._imei,
         _locacion: appliedFilters._locacion,
     };
@@ -223,8 +218,8 @@ export default function HistorialAlertasTabla({
         _cod_nevera: appliedFilters._cod_nevera,
         _distribuidor: appliedFilters._distribuidor,
         _evento: appliedFilters._evento,
-        _fecha_inicio: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_inicio,
-        _fecha_fin: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_fin,
+        _fecha_inicio: appliedFilters._fecha_inicio,
+        _fecha_fin: appliedFilters._fecha_fin,
         _imei: appliedFilters._imei,
         _locacion: appliedFilters._locacion,
         _or: sortDescriptor.direction === "ascending" ? "asc" : "desc",
@@ -269,7 +264,6 @@ export default function HistorialAlertasTabla({
                     );
                 },
             },
-
             { key: "alert_loc_nom", label: "Locación", width: 130, sortable: false },
             {
                 key: "alert_dis_bateria",
@@ -340,7 +334,7 @@ export default function HistorialAlertasTabla({
             { key: "alert_dis_satelite", label: "Satélite", width: 130, sortable: false },
             { key: "alert_dis_cliente", label: "Cliente", width: 130, sortable: false },
         ],
-        []
+        [handleOpenMap]
     );
 
     const filters: FilterFieldDef[] = [
@@ -370,14 +364,12 @@ export default function HistorialAlertasTabla({
     }, [endDate]);
 
     const getDownloadBody = useCallback(() => {
-        // Para la descarga, también excluimos fechas si hay otros filtros activos
-        const hasFilters = hasActiveFilters(appliedFilters);
         return {
             _cod_nevera: appliedFilters._cod_nevera || "",
             _distribuidor: appliedFilters._distribuidor || "",
             _evento: appliedFilters._evento || "",
-            _fecha_inicio: hasFilters ? "" : (appliedFilters._fecha_inicio || getFechaInicio()),
-            _fecha_fin: hasFilters ? "" : (appliedFilters._fecha_fin || getFechaFin()),
+            _fecha_inicio: appliedFilters._fecha_inicio || getFechaInicio(),
+            _fecha_fin: appliedFilters._fecha_fin || getFechaFin(),
             _imei: appliedFilters._imei || "",
             _locacion: appliedFilters._locacion || "",
             _cliente: appliedFilters._cliente || "",

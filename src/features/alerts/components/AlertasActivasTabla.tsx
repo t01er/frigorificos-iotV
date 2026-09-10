@@ -6,7 +6,6 @@ import TableComponent, {
 import { useGetAlertsHistoricalQuery, useGetAlertsHistoricalCountQuery } from "../services/alertsApi";
 import type { AlertsFilters, AlertsItem } from "../services/alertsApi";
 import { Chip, type DateValue } from "@heroui/react";
-import { useTodayDate } from "../../../hooks/useTodayDate";
 import MapModal from "../../dashboard/components/MapModal";
 import { StreetsMapPoint } from "@solar-icons/react";
 import DownloadButton from "../../../components/ux/DownloadButton";
@@ -20,16 +19,7 @@ const formatDate = (date: DateValue | null) => {
     return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
 };
 
-// Función para verificar si hay filtros activos (excluyendo fecha)
-const hasActiveFilters = (filters: AlertsFilters): boolean => {
-    const { _fecha_hora, ...otherFilters } = filters;
-    return Object.values(otherFilters).some(value => value && value.toString().trim() !== '');
-};
-
 export default function AlertsTabla() {
-    const today = useTodayDate();
-    const initialDateStr = formatDate(today);
-
     const [selectedAlert, setSelectedAlert] = useState<AlertsItem | null>(null);
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
@@ -43,7 +33,7 @@ export default function AlertsTabla() {
         _cod_nevera: "",
         _distribuidor: "",
         _evento: "",
-        _fecha_hora: initialDateStr,
+        _fecha_hora: "",
         _imei: "",
         _locacion: "",
         _or: "desc",
@@ -57,7 +47,7 @@ export default function AlertsTabla() {
 
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
-    const [dateValue, setDateValue] = useState<DateValue | null>(today);
+    const [dateValue, setDateValue] = useState<DateValue | null>(null);
 
     const [sortDescriptor, setSortDescriptor] = useState<{
         column: string;
@@ -70,8 +60,7 @@ export default function AlertsTabla() {
         _cod_nevera: appliedFilters._cod_nevera,
         _distribuidor: appliedFilters._distribuidor,
         _evento: appliedFilters._evento,
-        // Solo incluir fecha si NO hay otros filtros activos
-        _fecha_hora: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_hora,
+        _fecha_hora: appliedFilters._fecha_hora,
         _imei: appliedFilters._imei,
         _locacion: appliedFilters._locacion,
     };
@@ -82,8 +71,7 @@ export default function AlertsTabla() {
         _cod_nevera: appliedFilters._cod_nevera,
         _distribuidor: appliedFilters._distribuidor,
         _evento: appliedFilters._evento,
-        // Solo incluir fecha si NO hay otros filtros activos
-        _fecha_hora: hasActiveFilters(appliedFilters) ? "" : appliedFilters._fecha_hora,
+        _fecha_hora: appliedFilters._fecha_hora,
         _imei: appliedFilters._imei,
         _locacion: appliedFilters._locacion,
         _or: sortDescriptor.direction === "ascending" ? "asc" : "desc",
@@ -112,7 +100,7 @@ export default function AlertsTabla() {
     const handleClearFilters = () => {
         setDraftFilters(initialFilters);
         setAppliedFilters(initialFilters);
-        setDateValue(today);
+        setDateValue(null);
         setPage(1);
     };
 
