@@ -1,4 +1,3 @@
-// JasperBitacoraTabla.tsx
 import { useState, useMemo } from "react";
 import TableComponent, {
     type CustomColumnDef,

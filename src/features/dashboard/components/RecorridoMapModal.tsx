@@ -15,6 +15,7 @@ interface RecorridoMapModalProps {
   isOpen: boolean;
   onClose: () => void;
   imei: string | null;
+  codNevera: string | null;
   mapStyle?: string;
 }
 
@@ -127,7 +128,7 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
 
     const puntosControlSourceId = "puntos-control-source";
     const puntosControlLayerId = "puntos-control-layer";
-    
+
     const puntosControlFeatures: GeoJSON.Feature[] = puntosControl
       .map((pc) => {
         const lng = parseFloat(pc.longitud);
@@ -184,7 +185,7 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
 
         return {
           type: "Feature",
-          properties: { 
+          properties: {
             color,
             radio: pc.radio,
           },
@@ -606,13 +607,11 @@ function RecorridoLayers({ map, coordenadas, puntosControl }: RecorridoLayersPro
           });
           if (map.getSource(coordenadasSourceId)) map.removeSource(coordenadasSourceId);
 
-          // Remover línea y flechas
           if (map.getLayer(arrowLayerId)) map.removeLayer(arrowLayerId);
           if (map.getLayer(layerId)) map.removeLayer(layerId);
           if (map.getSource(sourceId)) map.removeSource(sourceId);
         }
       } catch {
-        // Ignorar errores en cleanup
       }
     };
   }, [map, coordenadas, puntosControl]);
@@ -624,6 +623,7 @@ export default function RecorridoMapModal({
   isOpen,
   onClose,
   imei,
+  codNevera,
   mapStyle = "mapbox://styles/mapbox/streets-v12",
 }: RecorridoMapModalProps) {
   const { data, isLoading, isFetching } = useGetMovimientosDispositivoQuery(imei ?? "", {
@@ -645,10 +645,21 @@ export default function RecorridoMapModal({
           <span>Recorrido del Dispositivo</span>
           {imei && (
             <span className="text-xs font-normal text-default-500">
-              IMEI: <strong className="text-primary">{imei}</strong> | Locación:{" "}
-              <strong>{data?.data?.locacion ?? "Cargando..."}</strong>
+              Código Nevera:{" "}
+              <strong className="text-primary">
+                {codNevera}
+              </strong>{" "}
+              | IMEI:{" "}
+              <strong className="text-primary">
+                {imei}
+              </strong>{" "}
+              | Locación:{" "}
+              <strong>
+                {data?.data?.locacion ?? "Cargando..."}
+              </strong>
             </span>
           )}
+
         </ModalHeader>
 
         <div className="relative p-0 h-175 overflow-hidden rounded-b-lg bg-gray-100">

@@ -49,11 +49,6 @@ export default function NeverasTabla({
         setIsMapModalOpen(true);
     }, []);
 
-    const handleOpenRecorrido = useCallback((imei: string) => {
-        setSelectedImei(imei);
-        setIsRecorridoModalOpen(true);
-    }, []);
-
     const [filterValues, setFilterValues] = useState<Record<string, string>>({
         cod_nevera: codNeveraFilter || "",
         imei: imeiFilter || "",
@@ -180,6 +175,71 @@ export default function NeverasTabla({
         setDownloadBody(getDownloadPayload());
     }, [getDownloadPayload]);
 
+    const [selectedCodNevera, setSelectedCodNevera] = useState<string | null>(null);
+
+    const handleOpenRecorrido = useCallback(
+        (imei: string, codNevera: string) => {
+            setSelectedImei(imei);
+            setSelectedCodNevera(codNevera);
+            setIsRecorridoModalOpen(true);
+        },
+        []
+    );
+
+
+    function getRangoUltimoMes() {
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const format = (d: Date) =>
+            `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+            `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+        const hoy = new Date();
+        const haceUnMes = new Date(hoy);
+        haceUnMes.setMonth(haceUnMes.getMonth() - 1);
+
+        return {
+            fechaInicio: format(haceUnMes),
+            fechaFin: format(hoy),
+        };
+    }
+
+    function formatFechaParaNombre(d: Date) {
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    function getRangoUltimoMesParaNombre() {
+        const hoy = new Date();
+        const haceUnMes = new Date(hoy);
+        haceUnMes.setMonth(haceUnMes.getMonth() - 1);
+
+        return {
+            fechaInicio: formatFechaParaNombre(haceUnMes),
+            fechaFin: formatFechaParaNombre(hoy),
+        };
+    }
+
+    const getBitacoraFechaInicio = useCallback(() => {
+        return getRangoUltimoMes().fechaInicio;
+    }, []);
+
+    const getBitacoraFechaFin = useCallback(() => {
+        return getRangoUltimoMes().fechaFin;
+    }, []);
+
+    const getBitacoraBody = useCallback(() => {
+        const { fechaInicio, fechaFin } = getRangoUltimoMes();
+        return {
+            fechaInicio,
+            fechaFin,
+        };
+    }, []);
+
+    const getBitacoraFileName = useCallback(() => {
+        const { fechaInicio, fechaFin } = getRangoUltimoMesParaNombre();
+        return `Bitacora_${fechaInicio}_al_${fechaFin}.zip`;
+    }, []);
+
     const columns: CustomColumnDef<NeveraDashboardItem>[] = useMemo(
         () => [
             { key: "dis_cod_nevera", label: "Código Nevera", width: 130, sticky: true, sortable: false },
@@ -192,7 +252,12 @@ export default function NeverasTabla({
                 render: (item) => (
                     <button
                         type="button"
-                        onClick={() => handleOpenRecorrido(item.dis_imei)}
+                        onClick={() =>
+                            handleOpenRecorrido(
+                                item.dis_imei,
+                                item.dis_cod_nevera
+                            )
+                        }
                         className="text-blue-600 underline font-medium hover:text-blue-800 transition-colors"
                         title="Ver recorrido del dispositivo"
                     >
@@ -386,9 +451,19 @@ export default function NeverasTabla({
                         <DownloadButton
                             url={DOWNLOAD_CONFIGS.bitacora.url}
                             label="Bitacora"
-                            tooltip="Descargar Bitacora"
+                            tooltip="Descargar Bitácora (último mes) - ZIP"
                             color="default"
+                            method="POST"
+                            body={getBitacoraBody()}
+                            fileName={getBitacoraFileName()}
                             rolesPermitidos={DOWNLOAD_CONFIGS.bitacora.rolesPermitidos}
+                            showConfirmDialog={true}
+                            confirmMessage={
+                                "Esta operación generará un archivo comprimido (.zip) con la bitácora del último mes y puede tardar unos minutos.\n\n¿Está seguro de proceder?"
+                            }
+                            onDownloadStart={() => console.log("Iniciando descarga de bitácora...")}
+                            onDownloadComplete={() => console.log("Bitácora descargada")}
+                            onError={(error) => console.error("Error en descarga de bitácora:", error)}
                         />
                         <DownloadButton
                             url={DOWNLOAD_CONFIGS.neverasDashboard.url}
@@ -432,6 +507,7 @@ export default function NeverasTabla({
                 isOpen={isRecorridoModalOpen}
                 onClose={() => setIsRecorridoModalOpen(false)}
                 imei={selectedImei}
+                codNevera={selectedCodNevera}
             />
         </div>
     );
