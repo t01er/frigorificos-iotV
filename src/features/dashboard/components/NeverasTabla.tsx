@@ -218,15 +218,7 @@ export default function NeverasTabla({
             fechaFin: formatFechaParaNombre(hoy),
         };
     }
-
-    const getBitacoraFechaInicio = useCallback(() => {
-        return getRangoUltimoMes().fechaInicio;
-    }, []);
-
-    const getBitacoraFechaFin = useCallback(() => {
-        return getRangoUltimoMes().fechaFin;
-    }, []);
-
+    
     const getBitacoraBody = useCallback(() => {
         const { fechaInicio, fechaFin } = getRangoUltimoMes();
         return {
