@@ -35,7 +35,7 @@ const baseQueryWithInterceptor = async (args: string | FetchArgs, api: BaseQuery
 
         return { error: { status: 401, data: { message: "Sesión expirada por inactividad" } } };
       }
-    } catch (e) {
+    } catch {
       console.error("Token corrupto detectado.");
       api.dispatch(logout());
       window.location.href = '/login';
