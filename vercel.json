@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/proxy/phuyu/:path*",
+      "destination": "https://phuyu-iot.com/:path*"
+    },
+    {
+      "source": "/proxy/entel/:path*",
+      "destination": "https://entel-iot.pe/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
