@@ -91,29 +91,29 @@ export const TEMPERATURA_MOCK: Record<RangoTemperatura, SerieTemperatura> = {
 };
 
 export const PRODUCTOS_MOCK: ProductoPlanograma[] = [
-  { nombre: "Coca-Cola 500 ml", sku: "77501001", estante: 1, cantidad: 8, planograma: 8, color: "#e5484d" },
-  { nombre: "Inca Kola 500 ml", sku: "77501002", estante: 1, cantidad: 6, planograma: 8, color: "#f5c518" },
-  { nombre: "Sprite 500 ml", sku: "77501014", estante: 2, cantidad: 2, planograma: 8, color: "#16a36a" },
-  { nombre: "San Luis Agua 625 ml", sku: "77502210", estante: 3, cantidad: 7, planograma: 6, color: "#4cc3f0" },
-  { nombre: "Frugos Durazno 300 ml", sku: "77503051", estante: 3, cantidad: 0, planograma: 6, color: "#f59e0b" },
-  { nombre: "Powerade Mora 473 ml", sku: "77504120", estante: 4, cantidad: 5, planograma: 6, color: "#2f6bff" },
-  { nombre: "Fanta Naranja 500 ml", sku: "77501020", estante: 2, cantidad: 8, planograma: 8, color: "#fb923c" },
-  { nombre: "Red Bull 250 ml", sku: "77505001", estante: 4, cantidad: 3, planograma: 6, color: "#1d4ed8" },
-  { nombre: "Monster Energy 473 ml", sku: "77505010", estante: 4, cantidad: 6, planograma: 6, color: "#22c55e" },
-  { nombre: "Cielo Agua 625 ml", sku: "77502230", estante: 3, cantidad: 6, planograma: 6, color: "#93c5fd" },
-  { nombre: "Pepsi 1 L", sku: "77506001", estante: 2, cantidad: 1, planograma: 4, color: "#1e3a8a" },
-  { nombre: "Gatorade Tropical 500 ml", sku: "77504210", estante: 4, cantidad: 4, planograma: 6, color: "#f97316" },
-  { nombre: "Coca-Cola Zero 500 ml", sku: "77501005", estante: 1, cantidad: 5, planograma: 4, color: "#111827" },
-  { nombre: "Guaraná 500 ml", sku: "77501030", estante: 2, cantidad: 4, planograma: 4, color: "#84cc16" },
-  { nombre: "Pulp Durazno 315 ml", sku: "77503060", estante: 3, cantidad: 0, planograma: 4, color: "#fbbf24" },
-  { nombre: "Free Tea 500 ml", sku: "77507001", estante: 3, cantidad: 4, planograma: 4, color: "#a3e635" },
-  { nombre: "Volt 300 ml", sku: "77505030", estante: 4, cantidad: 2, planograma: 4, color: "#eab308" },
-  { nombre: "Cifrut 500 ml", sku: "77503080", estante: 2, cantidad: 4, planograma: 4, color: "#ef4444" },
+  { nombre: "Coca-Cola 500 ml", sku: "77501001", estante: 1, cantidad: 8, planograma: 8, color: "var(--color-nx-purple)" },
+  { nombre: "Inca Kola 500 ml", sku: "77501002", estante: 1, cantidad: 6, planograma: 8, color: "var(--color-nx-blue)" },
+  { nombre: "Sprite 500 ml", sku: "77501014", estante: 2, cantidad: 2, planograma: 8, color: "var(--color-nx-violet)" },
+  { nombre: "San Luis Agua 625 ml", sku: "77502210", estante: 3, cantidad: 7, planograma: 6, color: "var(--color-nx-cyan)" },
+  { nombre: "Frugos Durazno 300 ml", sku: "77503051", estante: 3, cantidad: 0, planograma: 6, color: "var(--color-nx-text-2)" },
+  { nombre: "Powerade Mora 473 ml", sku: "77504120", estante: 4, cantidad: 5, planograma: 6, color: "var(--color-nx-purple)" },
+  { nombre: "Fanta Naranja 500 ml", sku: "77501020", estante: 2, cantidad: 8, planograma: 8, color: "var(--color-nx-blue)" },
+  { nombre: "Red Bull 250 ml", sku: "77505001", estante: 4, cantidad: 3, planograma: 6, color: "var(--color-nx-violet)" },
+  { nombre: "Monster Energy 473 ml", sku: "77505010", estante: 4, cantidad: 6, planograma: 6, color: "var(--color-nx-cyan)" },
+  { nombre: "Cielo Agua 625 ml", sku: "77502230", estante: 3, cantidad: 6, planograma: 6, color: "var(--color-nx-text-2)" },
+  { nombre: "Pepsi 1 L", sku: "77506001", estante: 2, cantidad: 1, planograma: 4, color: "var(--color-nx-purple)" },
+  { nombre: "Gatorade Tropical 500 ml", sku: "77504210", estante: 4, cantidad: 4, planograma: 6, color: "var(--color-nx-blue)" },
+  { nombre: "Coca-Cola Zero 500 ml", sku: "77501005", estante: 1, cantidad: 5, planograma: 4, color: "var(--color-nx-violet)" },
+  { nombre: "Guaraná 500 ml", sku: "77501030", estante: 2, cantidad: 4, planograma: 4, color: "var(--color-nx-cyan)" },
+  { nombre: "Pulp Durazno 315 ml", sku: "77503060", estante: 3, cantidad: 0, planograma: 4, color: "var(--color-nx-text-2)" },
+  { nombre: "Free Tea 500 ml", sku: "77507001", estante: 3, cantidad: 4, planograma: 4, color: "var(--color-nx-purple)" },
+  { nombre: "Volt 300 ml", sku: "77505030", estante: 4, cantidad: 2, planograma: 4, color: "var(--color-nx-blue)" },
+  { nombre: "Cifrut 500 ml", sku: "77503080", estante: 2, cantidad: 4, planograma: 4, color: "var(--color-nx-violet)" },
 ];
 
 export const NO_DESEADOS_MOCK: ProductoNoDeseado[] = [
-  { nombre: "Pepsi 500 ml", motivo: "Competencia", estante: 2, hora: "14:36", color: "#1e3a8a" },
-  { nombre: "Bolsa de hielo 3 kg", motivo: "No autorizado", estante: 4, hora: "14:36", color: "#93c5fd" },
+  { nombre: "Pepsi 500 ml", motivo: "Competencia", estante: 2, hora: "14:36", color: "var(--color-nx-cyan)" },
+  { nombre: "Bolsa de hielo 3 kg", motivo: "No autorizado", estante: 4, hora: "14:36", color: "var(--color-nx-text-2)" },
 ];
 
 export const estadoProducto = (p: ProductoPlanograma): EstadoProducto => {

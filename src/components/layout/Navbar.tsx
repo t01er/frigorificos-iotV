@@ -184,9 +184,9 @@ export default function Navbar({
             }`}
           >
             <img
-              src="/logosimple.png"
+              src="/logolabotec.png"
               alt="Labotec"
-              className="size-8 rounded-full"
+              className="size-10 rounded-full"
             />
             {sidebarExpanded && (
               <span className="font-bold text-nx-text">Labotec</span>

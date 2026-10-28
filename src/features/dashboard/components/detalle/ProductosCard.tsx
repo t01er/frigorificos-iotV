@@ -41,7 +41,7 @@ function IconoProducto({ color }: { color: string }) {
   return (
     <span
       className="size-8 shrink-0 rounded-lg flex items-center justify-center"
-      style={{ background: `${color}22` }}
+      style={{ background: `color-mix(in srgb, ${color} 13%, transparent)` }}
     >
       <span className="w-2.5 h-4 rounded-[3px]" style={{ background: color }} />
     </span>
