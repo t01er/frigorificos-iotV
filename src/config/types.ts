@@ -28,3 +28,5 @@ export interface TalleresResponse extends PaginacionResponse {
 export interface TalleresResponseAlternativa extends PaginacionResponse {
   talleres: Taller[]; 
 }
+/** Tope de dispositivos que se muestran en el mapa y en las tablas */
+export const MAX_DISPOSITIVOS = 2000;

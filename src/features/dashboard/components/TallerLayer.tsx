@@ -1,12 +1,9 @@
-import { useEffect } from "react";
-import { createRoot } from "react-dom/client";
-import mapboxgl from "mapbox-gl";
+import { useEffect, useRef } from "react";
+import type { Map as MapboxMap, GeoJSONSource } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import MapPopupContent from "./MapPopupContent";
-import { Bus, MapPoint, ShockAbsorber, UserCheck, UserId, UserRounded, WalkingRound } from "@solar-icons/react";
 
 
-interface Taller {
+export interface Taller {
   codigo: number;
   nombre: string;
   direccion: string;
@@ -19,11 +16,15 @@ interface Taller {
 }
 
 interface Props {
-  map: mapboxgl.Map;
+  map: MapboxMap;
   talleres: Taller[];
+  onSelect?: (taller: Taller) => void;
 }
 
-export default function TallerLayer({ map, talleres }: Props) {
+export default function TallerLayer({ map, talleres, onSelect }: Props) {
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+
   const beforeLayer = map.getLayer("clusters") ? "clusters" : undefined;
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function TallerLayer({ map, talleres }: Props) {
     };
 
     if (map.getSource("talleres")) {
-      (map.getSource("talleres") as mapboxgl.GeoJSONSource).setData(
+      (map.getSource("talleres") as GeoJSONSource).setData(
         geojson as any
       );
       return;
@@ -77,50 +78,22 @@ export default function TallerLayer({ map, talleres }: Props) {
     );
 
     map.on("click", "talleres-layer", (e) => {
-      if (!e.features?.length) return;
+      const feature = e.features?.[0];
+      if (!feature) return;
 
-      const feature = e.features[0];
-      const taller = feature.properties as unknown as Taller;
-
-      const container = document.createElement("div");
-      const root = createRoot(container);
-      root.render(
-        <MapPopupContent
-          title={taller.nombre}
-          headerIcon={
-            taller.tipo === 1 ? (
-              <WalkingRound className="w-5 h-5" />
-            ) : (
-              <ShockAbsorber className="w-5 h-5" />
-            )
-          }
-          fields={[
-            {
-              label: taller.tipo === 1 ? "Distribuidor" : "Taller",
-              value: taller.nombre,
-              icon: <Bus />,
-              bold: true,
-            },
-            { label: "Dirección", value: taller.direccion, icon: <MapPoint /> },
-            { label: "Supervisor", value: taller.supervisor, icon: <UserRounded /> },
-            { label: "Coordinador", value: taller.coordinador, icon: <UserCheck /> },
-            { label: "Razón Social", value: taller.razon_social, icon: <UserId /> },
-          ]}
-        />
-      );
-
-      const popup = new mapboxgl.Popup({ closeButton: true })
-        .setLngLat(
-          (feature.geometry as GeoJSON.Point).coordinates as [number, number]
-        )
-        .setDOMContent(container)
-        .addTo(map);
-
-      popup.on("close", () => {
-        root.unmount();
+      map.easeTo({
+        center: (feature.geometry as GeoJSON.Point).coordinates as [number, number],
+        duration: 500,
       });
+      onSelectRef.current?.(feature.properties as unknown as Taller);
     });
 
+    map.on("mouseenter", "talleres-layer", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mouseleave", "talleres-layer", () => {
+      map.getCanvas().style.cursor = "";
+    });
 
     map.loadImage("/taller.png", (err, image) => {
       if (err || !image) return;

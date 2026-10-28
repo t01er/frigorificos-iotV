@@ -33,6 +33,8 @@ type LoginAPIType = UserAPIType & {
 
 export const loginAPI = async (nombreUsuario: string, clave: string): Promise<UserAPIType> => {
   let response: LoginAPIType | null = null;
+  // Mensaje del servidor principal (ej. "Error - Datos de usuario no coinciden !")
+  let serverMessage: string | null = null;
   const urlEncodedBody = new URLSearchParams({ nombreUsuario, clave }).toString();
 
   const formHeaders = {
@@ -49,6 +51,9 @@ export const loginAPI = async (nombreUsuario: string, clave: string): Promise<Us
 
     if (res1.ok) {
       response = await res1.json();
+      if (response && response.message !== "OK") {
+        serverMessage = response.message?.trim() || null;
+      }
     }
 
     if (response && response.message === "OK") {
@@ -139,7 +144,11 @@ export const loginAPI = async (nombreUsuario: string, clave: string): Promise<Us
         distribuidoresPermitidos: [],
       };
     } catch (fallbackError: any) {
-      throw new Error(fallbackError.message || "No se pudo conectar con ningún servicio de autenticación.");
+      throw new Error(
+        serverMessage ||
+          fallbackError.message ||
+          "No se pudo conectar con ningún servicio de autenticación.",
+      );
     }
   }
 

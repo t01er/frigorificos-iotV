@@ -3,11 +3,20 @@ import TableComponent, {
     type CustomColumnDef,
     type FilterFieldDef,
 } from "../../../components/ux/TableComponent";
-import { useEliminarUsuarioEntelMutation, useEliminarUsuarioNestleMutation, useGetUsersQuery, type UserItem } from "../services/userApi";
+import {
+    useActualizarUsuarioEntelMutation,
+    useActualizarUsuarioNestleMutation,
+    useEliminarUsuarioEntelMutation,
+    useEliminarUsuarioNestleMutation,
+    useGetUsersQuery,
+    type UserItem,
+} from "../services/userApi";
+import UsersSidePanel from "./UsersSidePanel";
+import { PerfilTag, UserAvatar } from "./UserCells";
 import ModalUsuarioNuevo from "./ModalUsuarioNuevo";
 import * as XLSX from 'xlsx';
-import { InboxIn, PenNewSquare, TrashBinTrash } from "@solar-icons/react";
-import { Avatar, Chip, Button } from "@heroui/react";
+import { FileText, Magnifier, PenNewSquare, TrashBinTrash, UserPlus } from "@solar-icons/react";
+import { Button, Switch } from "@heroui/react";
 const PAGE_SIZE_DEFAULT = 15;
 
 export default function UsersTabla() {
@@ -32,6 +41,9 @@ export default function UsersTabla() {
     const { data, isLoading, isFetching, refetch } = useGetUsersQuery();
     const [eliminarUsuarioNestle] = useEliminarUsuarioNestleMutation();
     const [eliminarUsuarioEntel] = useEliminarUsuarioEntelMutation();
+    const [actualizarNestle] = useActualizarUsuarioNestleMutation();
+    const [actualizarEntel] = useActualizarUsuarioEntelMutation();
+    const [togglingId, setTogglingId] = useState<number | null>(null);
 
     const allUsers = data?.data ?? [];
 
@@ -184,24 +196,67 @@ export default function UsersTabla() {
         }
     }, [eliminarUsuarioNestle, eliminarUsuarioEntel]);
 
+    const handleToggleEstado = useCallback(
+        async (user: UserItem) => {
+            const activar = user.usu_estado?.toLowerCase() !== "activo";
+            if (
+                !window.confirm(
+                    `¿${activar ? "Activar" : "Desactivar"} al usuario "${user.usu_usuario}"?`,
+                )
+            )
+                return;
+
+            setTogglingId(user.usu_id);
+            try {
+                const payload = {
+                    usu_id: user.usu_id,
+                    usu_empresa: 9,
+                    usu_nombre: user.usu_nombre,
+                    usu_correo: user.usu_correo,
+                    usu_telefono: user.usu_telefono,
+                    usu_cargo: user.usu_cargo,
+                    usu_usuario: user.usu_usuario,
+                    usu_contrasena: user.usu_contrasena,
+                    usu_tipo: user.usu_tipo,
+                    usu_estado: activar ? "activo" : "inactivo",
+                    usu_lista_distribuidores: user.usu_lista_distribuidores ?? [],
+                };
+                await Promise.all([
+                    actualizarNestle(payload).unwrap(),
+                    actualizarEntel({
+                        ...payload,
+                        usu_usuario_original: user.usu_usuario,
+                    } as typeof payload).unwrap(),
+                ]);
+                setReloadData(true);
+            } catch (error) {
+                console.error("Error al cambiar el estado del usuario:", error);
+            } finally {
+                setTogglingId(null);
+            }
+        },
+        [actualizarNestle, actualizarEntel],
+    );
+
+    const iconBtn =
+        "size-8 rounded-full flex items-center justify-center transition-colors";
+
     const columns: CustomColumnDef<UserItem>[] = useMemo(
         () => [
             {
                 key: "usu_nombre",
                 label: "Nombre",
-                width: 200,
-                sticky: true,
+                width: 260,
                 render: (item) => (
-                    <div className="flex items-center gap-2">
-                        <Avatar
-                            size="sm"
-                            name={item.usu_nombre}
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(item.usu_nombre)}&background=%231e187b&size=32&color=fff&bold=true`}
-                            className="shrink-0"
-                        />
-                        <div className="flex flex-col leading-tight">
-                            <span className="font-semibold text-slate-700">{item.usu_nombre}</span>
-                            <span className="text-[11px] text-slate-400">{item.usu_correo}</span>
+                    <div className="flex items-center gap-3">
+                        <UserAvatar name={item.usu_nombre} />
+                        <div className="flex flex-col leading-tight min-w-0">
+                            <span className="font-semibold text-nx-text truncate">
+                                {item.usu_nombre}
+                            </span>
+                            <span className="text-[11px] text-nx-text-3 truncate">
+                                {item.usu_correo}
+                            </span>
                         </div>
                     </div>
                 ),
@@ -209,90 +264,87 @@ export default function UsersTabla() {
             {
                 key: "usu_telefono",
                 label: "Teléfono",
-                width: 130
+                width: 130,
+                render: (item) => <span>{item.usu_telefono || "—"}</span>,
             },
             {
                 key: "usu_cargo",
                 label: "Cargo",
-                width: 130
+                width: 200,
+                render: (item) => <span>{item.usu_cargo || "—"}</span>,
             },
             {
                 key: "usu_usuario",
                 label: "Usuario",
-                width: 200,
-                sticky: true,
+                width: 190,
                 render: (item) => (
-                    <div className="flex items-center gap-2">
-                        <div className="flex flex-col leading-tight">
-                            <span className="font-semibold text-slate-700">{item.usu_usuario}</span>
-                            <span className="text-[11px] text-slate-400">{item.usu_tipo}</span>
-                        </div>
+                    <div className="flex flex-col gap-0.5 leading-tight">
+                        <span className="font-medium text-nx-text">{item.usu_usuario}</span>
+                        <PerfilTag tipo={item.usu_tipo} />
                     </div>
                 ),
             },
             {
                 key: "usu_estado",
                 label: "Estado",
-                width: 130,
-                align: "center",
-                render: (item) => {
-                    const estado = item.usu_estado?.toLowerCase();
-                    const map: Record<string, "success" | "danger" | "warning" | "default"> = {
-                        activo: "success",
-                        inactivo: "danger",
-                        desconocido: "warning",
-                    };
-                    return (
-                        <Chip size="sm" variant="solid" color={map[estado] ?? "default"}>
-                            {item.usu_estado}
-                        </Chip>
-                    );
-                },
+                width: 90,
+                render: (item) => (
+                    <Switch
+                        size="sm"
+                        color="success"
+                        aria-label={`Estado de ${item.usu_usuario}`}
+                        isSelected={item.usu_estado?.toLowerCase() === "activo"}
+                        isDisabled={togglingId === item.usu_id}
+                        onValueChange={() => handleToggleEstado(item)}
+                    />
+                ),
             },
             {
                 key: "acciones",
                 label: "Acciones",
-                width: 100,
-                align: "center",
+                width: 110,
+                align: "end",
+                sortable: false,
                 render: (item) => (
-                    <div className="flex items-center justify-center" >
-                        <Button
-                            size="sm"
-                            variant="light"
-                            color="primary"
-                            onPress={() => handleEditUser(item)}
-                            startContent={
-                                <PenNewSquare size={18} />
-                            }
+                    <div className="flex items-center justify-end gap-2">
+                        <button
+                            type="button"
+                            aria-label="Editar usuario"
+                            title="Editar"
+                            onClick={() => handleEditUser(item)}
+                            className={`${iconBtn} bg-nx-surface-2 text-nx-text-2 hover:text-nx-text`}
                         >
-                            Editar
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={() => handleDeleteUser(item)}
-                            startContent={<TrashBinTrash size={18} />}
+                            <PenNewSquare size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Eliminar usuario"
+                            title="Eliminar"
+                            onClick={() => handleDeleteUser(item)}
+                            className={`${iconBtn} bg-nx-err-soft text-nx-err hover:text-nx-err-ink`}
                         >
-                            Eliminar
-                        </Button>
+                            <TrashBinTrash size={16} />
+                        </button>
                     </div>
                 ),
             },
         ],
-        [handleEditUser]
+        [handleEditUser, handleDeleteUser, handleToggleEstado, togglingId]
     );
 
     const filters: FilterFieldDef[] = [
         {
             key: "usu_usuario",
             type: "text",
-            placeholder: "Buscar por nombre, usuario, correo..."
+            placeholder: "Buscar por nombre o usuario",
+            icon: <Magnifier size={15} />,
+            width: "flex-[3] min-w-[14rem]",
         },
         {
             key: "estado",
             type: "select",
             placeholder: "Estado",
+            width: "w-40",
             options: [
                 { value: "", label: "Todos" },
                 { value: "activo", label: "Activo" },
@@ -303,6 +355,7 @@ export default function UsersTabla() {
             key: "tipo",
             type: "select",
             placeholder: "Perfil",
+            width: "w-44",
             options: [
                 { value: "", label: "Todos" },
                 { value: "admin", label: "Administrador" },
@@ -316,63 +369,72 @@ export default function UsersTabla() {
         },
     ];
 
-    const headerActions = (
-        <div className="flex gap-2">
-            <Button
-                color="primary"
-                size="sm"
-                onPress={handleOpenModal}
-                startContent={<span>+</span>}
-            >
-                Nuevo Usuario
-            </Button>
-            <Button
-                color="success"
-                size="sm"
-                variant="solid"
-                onPress={handleDownloadExcel}
-
-                startContent={
-                    <InboxIn size={15} />
-                }
-            >
-                {isExporting ? "Exportando..." : "Exportar Excel"}
-            </Button>
-        </div>
-    );
-
     return (
-        <>
-            <TableComponent
-                data={paginatedUsers}
-                columns={columns}
-                idField="usu_id"
-                filters={filters}
-                filterValues={filterValues}
-                headerActions={headerActions}
-                onFilterChange={(key, value) => {
-                    setFilterValues((prev) => ({ ...prev, [key]: value }));
-                }}
-                onClearFilters={() => {
-                    setFilterValues({
-                        usu_usuario: "",
-                        estado: "",
-                        tipo: ""
-                    });
-                }}
-                sortDescriptor={sortDescriptor}
-                onSortChange={(d) => {
-                    setSortDescriptor(d);
-                }}
-                page={page}
-                pageSize={pageSize}
-                totalRegistros={totalRegistros}
-                onPageChange={setPage}
-                onPageSizeChange={(size) => {
-                    setPageSize(size);
-                }}
-                isLoading={isLoading || isFetching}
-            />
+        <div className="flex flex-col gap-4">
+            <header className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h1 className="text-3xl font-bold text-nx-text">Usuarios</h1>
+                    <p className="text-sm text-nx-text-3">
+                        {allUsers.length.toLocaleString("es-ES", { useGrouping: "always" })}{" "}
+                        personas con acceso a Labotec entre Nestlé y distribuidores
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Button
+                        radius="full"
+                        isDisabled={isExporting}
+                        className="bg-nx-surface text-nx-text font-medium"
+                        startContent={<FileText size={18} className="text-nx-ok" />}
+                        onPress={handleDownloadExcel}
+                    >
+                        {isExporting ? "Exportando..." : "Exportar Excel"}
+                    </Button>
+                    <Button
+                        radius="full"
+                        className="bg-nx-gradient text-white font-semibold"
+                        startContent={<UserPlus size={18} />}
+                        onPress={handleOpenModal}
+                    >
+                        Nuevo usuario
+                    </Button>
+                </div>
+            </header>
+
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
+                <TableComponent
+                    data={paginatedUsers}
+                    columns={columns}
+                    idField="usu_id"
+                    itemLabel="usuarios"
+                    filters={filters}
+                    clearIconOnly
+                    filterValues={filterValues}
+                    onFilterChange={(key, value) => {
+                        setFilterValues((prev) => ({ ...prev, [key]: value }));
+                    }}
+                    onClearFilters={() => {
+                        setFilterValues({
+                            usu_usuario: "",
+                            estado: "",
+                            tipo: ""
+                        });
+                    }}
+                    sortDescriptor={sortDescriptor}
+                    onSortChange={(d) => {
+                        setSortDescriptor(d);
+                    }}
+                    page={page}
+                    pageSize={pageSize}
+                    totalRegistros={totalRegistros}
+                    onPageChange={setPage}
+                    onPageSizeChange={(size) => {
+                        setPageSize(size);
+                    }}
+                    isLoading={isLoading || isFetching}
+                />
+
+                <UsersSidePanel users={allUsers} />
+            </div>
 
             <ModalUsuarioNuevo
                 isOpen={isModalOpen}
@@ -383,6 +445,6 @@ export default function UsersTabla() {
                 isEditing={isEditing}
                 empresaId={9}
             />
-        </>
+        </div>
     );
 }

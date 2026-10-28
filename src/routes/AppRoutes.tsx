@@ -8,6 +8,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Login from "../features/auth/pages/Login";
 import Dashboard from "../features/dashboard/pages/Dashboard";
 import Neveras from "../features/dashboard/pages/Neveras";
+import NeveraDetalle from "../features/dashboard/pages/NeveraDetalle";
 import Jasper from "../features/dashboard/pages/Jasper";
 import NotFound from "../features/notFound/pages/NotFound";
 import Devices from "../features/devices/pages/Devices";
@@ -30,6 +31,7 @@ export default function AppRoutes() {
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/neveras" element={<Neveras />} />
+            <Route path="/dashboard/neveras/:codigo" element={<NeveraDetalle />} />
             <Route path="/dashboard/jasper" element={<Jasper />} />
             <Route path="/sensores" element={<Devices />} />
             <Route path="/alertas" element={<Alerts />} />

@@ -1,4 +1,4 @@
-import { useState, useRef, type ComponentType, type Ref } from "react";
+import { useState, useRef, useEffect, type ComponentType, type Ref } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../../auth/services/authApi";
 import { Input, Button } from "@heroui/react";
@@ -12,6 +12,10 @@ const ReCAPTCHAComponent = ReCAPTCHA as unknown as ComponentType<{
   ref?: Ref<unknown>;
 }>;
 
+const CAPTCHA_WIDTH = 304;
+const CAPTCHA_HEIGHT = 78;
+const CAPTCHA_MAX_SCALE = 0.88;
+
 export default function LoginForm() {
   const [login, { isLoading, error }] = useLoginMutation();
   const navigate = useNavigate();
@@ -23,6 +27,19 @@ export default function LoginForm() {
   const recaptchaRef = useRef<unknown>(null);
 
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  const captchaBoxRef = useRef<HTMLDivElement>(null);
+  const [captchaScale, setCaptchaScale] = useState(1);
+
+  useEffect(() => {
+    const el = captchaBoxRef.current;
+    if (!el) return;
+    const update = () => setCaptchaScale(Math.min(CAPTCHA_MAX_SCALE, el.clientWidth / CAPTCHA_WIDTH));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleCaptchaChange = (token: string | null) => {
     setCaptchaToken(token);
@@ -57,66 +74,86 @@ export default function LoginForm() {
   const castedError = error as any;
 
   const globalErrorMessage =
-    castedError?.data?.data?.message || castedError?.data?.message || null;
+    castedError?.error ||
+    castedError?.data?.data?.message ||
+    castedError?.data?.message ||
+    null;
 
   return (
     <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <div className="space-y-4 ">
+      <div className="flex flex-col gap-5">
         <Input
-          variant="faded"
-          radius="sm"
-          size="lg"
-          placeholder="Usuario"
+          size="sm"
+          label="Usuario"
+          autoComplete="username"
           value={email}
           onValueChange={setEmail}
           isDisabled={isLoading}
-          labelPlacement="outside"
-          startContent={<UserRounded className="text-black/70" />}
+          startContent={<UserRounded size={18} className="text-default-400" />}
         />
 
         <Input
-          variant="faded"
-          radius="sm"
-          size="lg"
-          placeholder="Contraseña"
+          size="sm"
+          label="Contraseña"
+          autoComplete="current-password"
           type={showPassword ? "text" : "password"}
           value={password}
           onValueChange={setPassword}
           isDisabled={isLoading}
-          startContent={<Lock className="text-black/70" />}
+          startContent={<Lock size={18} className="text-default-400" />}
           endContent={
             <button
               type="button"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               onClick={() => setShowPassword(!showPassword)}
-              className="text-black/70"
+              className="text-nx-text-3 hover:text-nx-text transition-colors"
             >
-              {showPassword ? <EyeClosed size={18} /> : <Eye size={18} />}
+              {showPassword ? <Eye size={18} /> : <EyeClosed size={18} />}
             </button>
           }
         />
-        <div className="">
-          <ReCAPTCHAComponent
-            ref={recaptchaRef}
-            sitekey={RECAPTCHA_TOKEN}
-            onChange={handleCaptchaChange}
-          />
+
+        <div
+          ref={captchaBoxRef}
+          className="w-full flex justify-center"
+          style={{ height: CAPTCHA_HEIGHT * captchaScale }}
+        >
+          <div
+            style={{
+              width: CAPTCHA_WIDTH,
+              flexShrink: 0,
+              transform: `scale(${captchaScale})`,
+              transformOrigin: "top center",
+            }}
+          >
+            <ReCAPTCHAComponent
+              ref={recaptchaRef}
+              sitekey={RECAPTCHA_TOKEN}
+              onChange={handleCaptchaChange}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="flex flex-col gap-3">
         <Button
           type="submit"
-          variant="solid"          
-          radius="sm"
-          className="w-full bg-white text-primary font-bold"
+          radius="full"
+          size="md"
+          className="w-full bg-nx-gradient text-white font-medium h-11 text-sm"
           isLoading={isLoading}
           isDisabled={isLoading || !captchaToken}
         >
-          {isLoading ? "Iniciando Sesión..." : "Iniciar Sesión"}
+          {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
         </Button>
 
         {globalErrorMessage && (
-          <p className="mt-2 text-sm text-red-500">{globalErrorMessage}</p>
+          <p
+            role="alert"
+            className="rounded-xl bg-nx-err-soft px-4 py-2.5 text-sm text-nx-err-ink text-center"
+          >
+            {globalErrorMessage}
+          </p>
         )}
       </div>
     </form>

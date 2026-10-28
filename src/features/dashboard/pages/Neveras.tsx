@@ -3,10 +3,10 @@ import { useSearchParams } from "react-router-dom";
 
 import PageContainer from "../../../layouts/PageContainer";
 import NeverasTabla from "../components/NeverasTabla";
-import GraphicsCountNeveras from "../components/GraphicsCountNeveras";
-import GraficoDistribuidor from "../components/GraficoDistribuidor";
+import NeverasStatsRow from "../components/NeverasStatsRow";
+import DownloadMenu from "../components/DownloadMenu";
+import GraficoDistribuidor, { AlertasLegend } from "../components/GraficoDistribuidor";
 import { useNeveraFilterContext } from "../contexts/NeveraFilterContext";
-import { Accordion, AccordionItem } from "@heroui/react";
 
 export default function Neveras() {
   const [activeFilter, setActiveFilter] = useState<string>("");
@@ -41,54 +41,49 @@ export default function Neveras() {
     []
   );
 
+  const isDistribuidores = activeTab === "distribuidores";
+
   return (
     <PageContainer>
+      <div className="flex flex-col gap-4">
+        <header className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-nx-text">
+              {isDistribuidores ? "Alertas por distribuidor" : "Congeladoras"}
+            </h1>
+            <p className="text-sm text-nx-text-3">
+              {isDistribuidores
+                ? "Neveras alertadas agrupadas por región y distribuidor"
+                : "Estado, ubicación y última transmisión de cada nevera"}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {isDistribuidores && <AlertasLegend />}
+            <DownloadMenu />
+          </div>
+        </header>
 
-
-      {activeTab === "congeladoras" && (
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-2">
-          <GraphicsCountNeveras
-            layout="grid"
+        {!isDistribuidores && (
+          <NeverasStatsRow
+            activeFilter={activeFilter}
             onFilterByEstado={handleFilterByEstado}
             onClearFilters={handleClearAllFilters}
           />
-        </div>
-      )}
+        )}
 
+        {isDistribuidores && (
+          <GraficoDistribuidor
+            onDistribuidorClick={handleDistribuidorClick}
+            onEstadoClick={handleEstadoFromGrafico}
+            onClearFilters={handleClearAllFilters}
+          />
+        )}
 
-      {activeTab === "distribuidores" && (
-
-        <Accordion
-          defaultExpandedKeys={["1", "2", "3"]}
-          selectionMode="multiple"
-          variant="splitted"
-          className="gap-3"
-        >
-          <AccordionItem
-            key="3"
-            aria-label="Grafico por Distribuidor"
-            title="Grafico por Distribuidor"
-            classNames={{
-              base: "p-0 overflow-hidden",
-              heading: "p-0",
-              trigger: "bg-primary px-4 py-3 rounded-none",
-              title: "text-white",
-            }}
-          >
-            <GraficoDistribuidor
-              onDistribuidorClick={handleDistribuidorClick}
-              onEstadoClick={handleEstadoFromGrafico}
-              onClearFilters={handleClearAllFilters}
-            />
-          </AccordionItem>
-        </Accordion>
-      )}
-
-      <NeverasTabla
-        externalFilter={activeFilter}
-        onClearExternalFilter={handleClearAllFilters}
-      />
-
+        <NeverasTabla
+          externalFilter={activeFilter}
+          onClearExternalFilter={handleClearAllFilters}
+        />
+      </div>
     </PageContainer>
   );
 }

@@ -1,65 +1,140 @@
-// Navbar.tsx (actualizado con contador)
 import { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../../features/auth/authSlice";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Avatar,
+  Badge,
+  BreadcrumbItem,
+  Breadcrumbs,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+  Input,
+  Tab,
+  Tabs,
+} from "@heroui/react";
+import {
+  AltArrowDown,
+  Bell,
+  Delivery,
+  HamburgerMenu,
+  Home2,
+  Logout3,
+  Magnifier,
+  Restart,
+  Routing2,
+  ServerMinimalistic,
+  StreetsMapPoint,
+} from "@solar-icons/react";
 
-import { Logout3, Bell } from "@solar-icons/react";
 import AlertDrawer from "../../components/ux/AlertDrawer";
 import type { AlertsItem } from "../../features/alerts/services/alertsApi";
-import { useAlertCounter } from "../../hooks/useAlertCounter"; // Importa el hook
-
+import { useAlertCounter } from "../../hooks/useAlertCounter";
+import { useNeveraFilterContext } from "../../features/dashboard/contexts/NeveraFilterContext";
+import { logout } from "../../features/auth/authSlice";
 
 const routeInfoMap = [
-  {
-    keyword: "/dashboard/location",
-    title: "Ubicación",
-    subtitle: "Monitoreo geográfico y tracking del sistema",
-  },
-  {
-    keyword: "/dashboard/device",
-    title: "Detalle de Dispositivo",
-    subtitle: "Consola de estado, métricas y telemetría",
-  },
-  {
-    keyword: "/dashboard",
-    title: "Inicio",
-    subtitle: "Administre sus dispositivos en tiempo real",
-  },
-  {
-    keyword: "/devices",
-    title: "Dispositivos",
-    subtitle: "Listado completo de terminales conectados",
-  },
-  {
-    keyword: "/graphics",
-    title: "Gráficos y Estadísticas",
-    subtitle: "Visualización de datos analíticos",
-  },
-  {
-    keyword: "/alerts",
-    title: "Alertas y Notificaciones",
-    subtitle: "Historial de advertencias y eventos del sistema",
-  },
-  {
-    keyword: "/users",
-    title: "Usuarios",
-    subtitle: "Control de operadores y permisos de acceso",
-  },
-  {
-    keyword: "/client",
-    title: "Clientes",
-    subtitle: "Gestión de cuentas y partners comerciales",
-  },
-  {
-    keyword: "/command",
-    title: "Línea de Comandos",
-    subtitle: "Envío manual de payloads y scripts remotos",
-  },
+  { keyword: "/dashboard/location", title: "Ubicación" },
+  { keyword: "/dashboard/device", title: "Detalle de dispositivo" },
+  { keyword: "/dashboard", title: "Inicio" },
+  { keyword: "/devices", title: "Dispositivos" },
+  { keyword: "/graphics", title: "Gráficos" },
+  { keyword: "/alerts", title: "Alertas" },
+  { keyword: "/users", title: "Usuarios" },
+  { keyword: "/client", title: "Clientes" },
+  { keyword: "/command", title: "Línea de comandos" },
 ];
 
+const DASHBOARD_ROUTES = [
+  "/dashboard",
+  "/dashboard/neveras",
+  "/dashboard/jasper",
+];
 
-export default function Navbar() {
+const pill =
+  "flex items-center h-12 rounded-full bg-nx-surface";
+
+const iconBtn =
+  "size-9 rounded-full flex items-center justify-center text-nx-text-2 hover:text-nx-text hover:bg-nx-surface-2 transition-colors";
+
+interface NavbarProps {
+  sidebarExpanded: boolean;
+  onOpenMenu: () => void;
+  onRefresh: () => void;
+}
+
+function DashboardTabs() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  const currentTab = (() => {
+    if (location.pathname === "/dashboard/jasper") return "jasper";
+    if (location.pathname.startsWith("/dashboard/neveras/")) return "congeladoras";
+    if (location.pathname === "/dashboard/neveras") {
+      return searchParams.get("tab") === "distribuidores"
+        ? "distribuidores"
+        : "congeladoras";
+    }
+    return "mapa";
+  })();
+
+  const go = (key: React.Key) => {
+    switch (String(key)) {
+      case "mapa":
+        return navigate("/dashboard");
+      case "congeladoras":
+        return navigate("/dashboard/neveras?tab=congeladoras");
+      case "distribuidores":
+        return navigate("/dashboard/neveras?tab=distribuidores");
+      case "jasper":
+        return navigate("/dashboard/jasper");
+    }
+  };
+
+  const title = (icon: React.ReactNode, label: string) => (
+    <div className="flex items-center gap-2">
+      {icon}
+      <span className="hidden xl:inline">{label}</span>
+    </div>
+  );
+
+  return (
+    <div className={`${pill} px-1.5`}>
+      <Tabs
+        aria-label="Secciones del dashboard"
+        selectedKey={currentTab}
+        onSelectionChange={go}
+        radius="full"
+        classNames={{
+          tabList: "bg-transparent p-0 gap-1",
+          cursor: "bg-nx-ink shadow-none",
+          tab: "h-9 px-3.5",
+          tabContent:
+            "text-nx-text-2 group-data-[selected=true]:text-nx-surface font-medium",
+        }}
+      >
+        <Tab key="mapa" title={title(<StreetsMapPoint size={17} />, "Mapa")} />
+        <Tab
+          key="congeladoras"
+          title={title(<ServerMinimalistic size={17} />, "Congeladoras")}
+        />
+        <Tab
+          key="distribuidores"
+          title={title(<Delivery size={17} />, "Distribuidores")}
+        />
+        {/* <Tab key="jasper" title={title(<Routing2 size={17} />, "Jasper")} /> */}
+      </Tabs>
+    </div>
+  );
+}
+
+export default function Navbar({
+  sidebarExpanded,
+  onOpenMenu,
+  onRefresh,
+}: NavbarProps) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isAlertDrawerOpen, setIsAlertDrawerOpen] = useState(false);
@@ -67,85 +142,176 @@ export default function Navbar() {
   const location = useLocation();
 
   const { unreadCount, refreshCount } = useAlertCounter();
+  const { codNeveraFilter, setCodNeveraFilter } = useNeveraFilterContext();
 
-  const pageMeta = useMemo(() => {
-    const currentPath = location.pathname;
-    const matchedRoute = routeInfoMap.find((route) =>
-      currentPath.startsWith(route.keyword),
+  const isDashboard =
+    DASHBOARD_ROUTES.includes(location.pathname) ||
+    location.pathname.startsWith("/dashboard/neveras/");
+
+  const pageTitle = useMemo(() => {
+    const matched = routeInfoMap.find((route) =>
+      location.pathname.startsWith(route.keyword),
     );
-    return (
-      matchedRoute || { title: "Panel", subtitle: "Bienvenido al sistema" }
-    );
+    return matched?.title ?? "Inicio";
   }, [location.pathname]);
 
-  const handleSignOut = () => {
-    dispatch(logout());
-    navigate("/login");
-  };
+  const role = String(user?.roles?.[0] ?? "")
+    .replace(/^ROLE_/i, "")
+    .toLowerCase();
 
   const handleAlertClick = (alert: AlertsItem) => {
     console.log("Alerta seleccionada:", alert);
     setIsAlertDrawerOpen(false);
   };
 
-  const handleOpenDrawer = () => {
-    setIsAlertDrawerOpen(true);
-  };
-
   return (
     <>
-      <div className="w-full absolute top-0 z-40">
-        <header
-          className="flex items-center justify-between h-[70px] px-10 py-2 bg-[#1e187b]"
-        >
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-black text-white transition-all duration-300">
-              {pageMeta.title}
-            </h1>
-            <p className="text-sm text-white/80 transition-all duration-300">
-              {pageMeta.subtitle}
-            </p>
-          </div>
+      <header className="flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            aria-label="Abrir menú"
+            onClick={onOpenMenu}
+            className={`${pill} md:hidden size-12 shrink-0 justify-center text-nx-text`}
+          >
+            <HamburgerMenu size={20} />
+          </button>
 
-          <div className="flex items-center gap-6">
-            <button
-              onClick={handleOpenDrawer} 
-              aria-label="Ver alertas"
-              className="p-2.5 rounded-xl transition-all bg-white/10 text-white hover:bg-white/20 backdrop-blur-md relative"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold px-1">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </button>
-
-            <div className="flex items-center gap-3 pl-4 border-l border-white/20">
-              <div className="w-11 h-11 rounded-full bg-[#1e187b] border border-white/30 shadow overflow-hidden">
-                <img
-                  src={`https://ui-avatars.com/api/?name=${user?.username || "A"}&background=1e187b&color=fff&size=128&rounded=true&border=fff&bold=true`}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-bold text-white">
-                  {user?.username || "Usuario IoT"}
-                </p>
-              </div>
+          <Link
+            to="/dashboard"
+            className={`${pill} hidden md:flex gap-2.5 px-2 shrink-0 overflow-hidden transition-[width] duration-300 ${
+              sidebarExpanded ? "w-[232px]" : "w-[58px] justify-center"
+            }`}
+          >
+            <img
+              src="/logosimple.png"
+              alt="Labotec"
+              className="size-8 rounded-full"
+            />
+            {sidebarExpanded && (
+              <span className="font-bold text-nx-text">Labotec</span>
+            )}
+          </Link>
+          {isDashboard ? (
+            <DashboardTabs />
+          ) : (
+            <div className={`${pill} pl-2 pr-5 min-w-0`}>
+              <Link
+                to="/dashboard"
+                aria-label="Ir al inicio"
+                className="size-8 shrink-0 rounded-full bg-nx-surface-2 flex items-center justify-center text-nx-text-2 hover:text-nx-text transition-colors"
+              >
+                <Home2 size={16} />
+              </Link>
+              <Breadcrumbs
+                size="sm"
+                className="pl-3 min-w-0"
+                itemClasses={{
+                  item: "text-nx-text-3 data-[current=true]:text-nx-text data-[current=true]:font-semibold",
+                  separator: "text-nx-text-3 px-1.5",
+                }}
+              >
+                <BreadcrumbItem>Panel</BreadcrumbItem>
+                <BreadcrumbItem isCurrent>{pageTitle}</BreadcrumbItem>
+              </Breadcrumbs>
             </div>
+          )}
+        </div>
 
-            <button
-              onClick={handleSignOut}
-              aria-label="Cerrar sesión"
-              className="p-2.5 rounded-xl transition-all bg-red-500/10 text-red-500 hover:bg-red-500/20 backdrop-blur-md"
+        <div className="flex items-center gap-2 shrink-0">
+          {isDashboard && (
+            <div className={`${pill} hidden lg:flex w-64 xl:w-72 px-4`}>
+              <Input
+                aria-label="Buscar código de nevera"
+                placeholder="Buscar código de nevera..."
+                value={codNeveraFilter}
+                onValueChange={setCodNeveraFilter}
+                isClearable
+                size="sm"
+                variant="flat"
+                startContent={<Magnifier size={18} className="text-nx-text-3" />}
+                classNames={{
+                  inputWrapper:
+                    "bg-transparent shadow-none data-[hover=true]:bg-transparent group-data-[focus=true]:bg-transparent px-0",
+                  input: "text-sm text-nx-text placeholder:text-nx-text-3",
+                }}
+              />
+            </div>
+          )}
+
+          <div className={`${pill} gap-1 px-1.5`}>
+            {isDashboard && (
+              <button
+                type="button"
+                aria-label="Actualizar datos"
+                onClick={onRefresh}
+                className={iconBtn}
+              >
+                <Restart size={18} />
+              </button>
+            )}
+            <Badge
+              content={unreadCount > 99 ? "99+" : unreadCount}
+              isInvisible={unreadCount === 0}
+              color="danger"
+              size="sm"
+              shape="circle"
             >
-              <Logout3 className="w-5 h-5" />
-            </button>
+              <button
+                type="button"
+                aria-label="Ver alertas"
+                onClick={() => setIsAlertDrawerOpen(true)}
+                className={iconBtn}
+              >
+                <Bell size={18} />
+              </button>
+            </Badge>
           </div>
-        </header>
-      </div>
+
+          <Dropdown placement="bottom-end">
+            <DropdownTrigger>
+              <button
+                type="button"
+                aria-label="Menú de usuario"
+                className={`${pill} gap-2.5 pl-1.5 pr-3`}
+              >
+                <Avatar
+                  name={(user?.username || "A").slice(0, 2).toUpperCase()}
+                  className="size-9 bg-nx-gradient text-white text-xs font-semibold"
+                />
+                <div className="hidden sm:flex flex-col items-start leading-tight">
+                  <span className="text-sm font-semibold text-nx-text">
+                    {user?.username || "Usuario IoT"}
+                  </span>
+                  {role && (
+                    <span className="text-xs text-nx-text-3 capitalize">
+                      {role}
+                    </span>
+                  )}
+                </div>
+                <AltArrowDown
+                  size={14}
+                  className="hidden sm:block text-nx-text-3"
+                />
+              </button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Usuario">
+              <DropdownItem
+                key="logout"
+                color="danger"
+                className="text-danger"
+                startContent={<Logout3 size={18} />}
+                onPress={() => {
+                  dispatch(logout());
+                  navigate("/login");
+                }}
+              >
+                Cerrar sesión
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        </div>
+      </header>
 
       <AlertDrawer
         isOpen={isAlertDrawerOpen}

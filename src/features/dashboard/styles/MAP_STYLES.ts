@@ -34,3 +34,14 @@ const MAP_STYLES = [
   },
 ];
 export default MAP_STYLES;
+/** Mapas base del selector "Cartografía" del dashboard */
+export const MAP_BASEMAPS = [
+  { key: "claro", label: "Claro", value: "mapbox://styles/mapbox/light-v11" },
+  { key: "calles", label: "Calles", value: "mapbox://styles/mapbox/streets-v12" },
+  {
+    key: "satelite",
+    label: "Satélite",
+    value: "mapbox://styles/mapbox/satellite-streets-v12",
+  },
+  { key: "oscuro", label: "Oscuro", value: "mapbox://styles/mapbox/dark-v11" },
+] as const;

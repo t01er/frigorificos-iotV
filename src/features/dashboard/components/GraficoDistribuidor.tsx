@@ -1,18 +1,10 @@
-import React, { useCallback, useState } from "react";
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    LabelList,
-} from "recharts";
+import React, { useCallback, useRef, useState } from "react";
+import { Skeleton } from "@heroui/react";
+import { ArrowRightUp } from "@solar-icons/react";
+
 import { useGetEventosDashboardPorDistribuidorQuery } from "../services/mapApi";
 import { useNeveraFilterContext } from "../contexts/NeveraFilterContext";
-import { Card, CardBody } from "@heroui/react";
-import { Skeleton } from "@heroui/react";
+import { formatNumber } from "../hooks/useResumenNeveras";
 
 interface GraficoDistribuidorProps {
     onDistribuidorClick?: (distribuidor: string) => void;
@@ -20,131 +12,95 @@ interface GraficoDistribuidorProps {
     onClearFilters?: () => void;
 }
 
-const ESTADO_COLORS: Record<string, string> = {
-    "Fuera de Zona": "#F28B00",
-    "Desconexión de Energía": "#fede4c",
-};
+type EstadoKey = "fuera_de_zona" | "desconexion_de_energia";
 
-const ESTADOS_PERMITIDOS = [
-    "fuera_de_zona",
-    "desconexion_de_energia",
-];
-
-const ESTADO_LABELS: Record<string, string> = {
-    fuera_de_zona: "Fuera de Zona",
-    desconexion_de_energia: "Desconexión de Energía",
-};
-
-const ESTADO_MAPEO_TABLA: Record<string, string> = {
-    "Fuera de Zona": "Fuera de Zona",
-    "Desconexión de Energía": "Desconexión por Energía",
-};
-
-const MAX_ITEMS_POR_COLUMNA = 8;
-
-interface TooltipPayloadItem {
-    dataKey: string;
-    value: number;
-    name: string;
-    color: string;
+interface Fila {
+    nombre: string;
+    zona: number;
+    energia: number;
+    total: number;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload || payload.length === 0) return null;
+const ESTADOS: {
+    key: EstadoKey;
+    label: string;
+    tabla: string;
+    bar: string;
+    text: string;
+}[] = [
+    {
+        key: "fuera_de_zona",
+        label: "Fuera de zona",
+        tabla: "Fuera de Zona",
+        bar: "bg-nx-err",
+        text: "text-nx-err-ink",
+    },
+    {
+        key: "desconexion_de_energia",
+        label: "Desconexión de energía",
+        tabla: "Desconexión por Energía",
+        bar: "bg-nx-warn",
+        text: "text-nx-warn-ink",
+    },
+];
 
+const card =
+    "rounded-[1.75rem] bg-nx-surface p-5";
+
+/** Leyenda de colores; se muestra en el encabezado de la página */
+export function AlertasLegend() {
     return (
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-lg shadow-lg p-3 z-50">
-            <p className="font-bold text-gray-800 mb-2">{label}</p>
-            <div className="space-y-1">
-                {payload.map((item: TooltipPayloadItem, index: number) => (
-                    <div key={index} className="flex items-center gap-2">
-                        <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: item.color }}
-                        />
-                        <span className="text-sm text-gray-600">{item.name}:</span>
-                        <span className="text-sm font-bold">{item.value}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-const GlobalLegend = () => {
-    const legendItems = [
-        {
-            label: "Fuera de Zona",
-            color: ESTADO_COLORS["Fuera de Zona"],
-        },
-        {
-            label: "Desconexión de Energía",
-            color: ESTADO_COLORS["Desconexión de Energía"],
-        },
-    ];
-
-    return (
-        <div className="flex flex-wrap justify-center gap-6 mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            {legendItems.map((item) => (
-                <div key={item.label} className="flex items-center gap-2">
-                    <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                        {item.label}
-                    </span>
-                </div>
+        <div className="flex items-center gap-4 h-11 px-4 rounded-full bg-nx-surface text-sm text-nx-text-2">
+            {ESTADOS.map((e) => (
+                <span key={e.key} className="flex items-center gap-2">
+                    <span className={`size-2.5 rounded-sm ${e.bar}`} />
+                    {e.label}
+                </span>
             ))}
         </div>
     );
+}
+
+const limpiarNombre = (nombre: string) => {
+    if (nombre.trim().toLowerCase() === "friohielos") return "Friohielos";
+    return nombre.replace(/^friohielos\s*/gi, "").trim();
 };
 
-function TarjetaPequenaSkeleton() {
+const toFilas = (regionData: Record<string, any>): Fila[] =>
+    Object.keys(regionData)
+        .map((nombre) => {
+            const zona = Number(regionData[nombre].fuera_de_zona) || 0;
+            const energia = Number(regionData[nombre].desconexion_de_energia) || 0;
+            return { nombre, zona, energia, total: zona + energia };
+        })
+        .sort((a, b) => b.total - a.total);
+
+const sumar = (filas: Fila[]) => ({
+    zona: filas.reduce((a, f) => a + f.zona, 0),
+    energia: filas.reduce((a, f) => a + f.energia, 0),
+});
+
+function Num({ value, className }: { value: number; className: string }) {
     return (
-        <Card shadow="none" className="bg-white h-full min-h-100">
-            <CardBody className="flex flex-col justify-between">
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <Skeleton className="rounded-lg w-24 h-7" />
-                        <Skeleton className="rounded-full w-14 h-6" />
-                    </div>
-                </div>
-                <div className="grow flex flex-col gap-2">
-                    {[...Array(4)].map((_, i) => (
-                        <Skeleton key={i} className="rounded-lg w-full h-8" />
-                    ))}
-                </div>
-            </CardBody>
-        </Card>
+        <span className={value === 0 ? "text-nx-text-3" : className}>
+            {formatNumber(value)}
+        </span>
     );
 }
 
-function TarjetaGrandeSkeleton() {
+function Skeletons() {
     return (
-        <div className="col-span-1 md:col-span-2 xl:col-span-3 h-full">
-            <Card shadow="none" className="bg-white h-full">
-                <CardBody className="flex flex-col justify-between h-full gap-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
-                        <div className="flex items-center gap-3">
-                            <Skeleton className="rounded-lg w-32 h-8" />
-                            <Skeleton className="rounded-full w-24 h-6" />
-                        </div>
-                        <Skeleton className="rounded-full w-20 h-6" />
-                    </div>
-                    <div className="flex flex-row gap-4 overflow-x-auto pb-2">
-                        {[...Array(3)].map((_, i) => (
-                            <div key={i} className="shrink-0" style={{ width: "400px", minWidth: "380px" }}>
-                                <div className="flex flex-col gap-2">
-                                    {[...Array(9)].map((_, j) => (
-                                        <Skeleton key={j} className="rounded-lg w-full h-7" />
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardBody>
-            </Card>
+        <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="h-24 rounded-[1.75rem]" />
+                ))}
+            </div>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-80 rounded-[1.75rem]" />
+                ))}
+            </div>
         </div>
     );
 }
@@ -163,371 +119,306 @@ const GraficoDistribuidor: React.FC<GraficoDistribuidorProps> = ({
         locacionFilter,
     } = useNeveraFilterContext();
 
-    const queryParams = {
+    const { data, isLoading, error } = useGetEventosDashboardPorDistribuidorQuery({
         ...(distribuidorFilter && { distribuidor: distribuidorFilter }),
         ...(codNeveraFilter && { cod_nevera: codNeveraFilter }),
         ...(imeiFilter && { imei: imeiFilter }),
         ...(locacionFilter && { locacion: locacionFilter }),
-    };
-    const { data, isLoading, error } = useGetEventosDashboardPorDistribuidorQuery(queryParams);
+    });
+
     const [activeBar, setActiveBar] = useState<{
         region: string;
         distribuidor: string;
         estado: string;
     } | null>(null);
-
-    const processDataForChart = (regionData: Record<string, any>) => {
-        const distribuidores = Object.keys(regionData);
-
-        const distribuidoresOrdenados = distribuidores
-            .map((dist) => {
-                const total = ESTADOS_PERMITIDOS.reduce(
-                    (acc, estado) => acc + (Number(regionData[dist][estado]) || 0),
-                    0
-                );
-                return { name: dist, total };
-            })
-            .sort((a, b) => b.total - a.total)
-            .map((d) => d.name);
-
-        return distribuidoresOrdenados.map((dist) => {
-            const item: any = { distribuidor: dist };
-
-            ESTADOS_PERMITIDOS.forEach((estado) => {
-                const label = ESTADO_LABELS[estado];
-                item[label] = Number(regionData[dist][estado]) || 0;
-            });
-
-            return item;
-        });
-    };
+    const [regionActiva, setRegionActiva] = useState<string | null>(null);
+    const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
     const handleClearLocalFilter = useCallback(() => {
         setActiveBar(null);
         onClearFilters?.();
     }, [onClearFilters]);
 
-    const dividirEnColumnas = (data: any[]) => {
-        if (data.length <= MAX_ITEMS_POR_COLUMNA) {
-            return [data];
-        }
-
-        const columnas = [];
-        const itemsPorColumna = Math.ceil(data.length / 3);
-
-        for (let i = 0; i < 3; i++) {
-            const inicio = i * itemsPorColumna;
-            const fin = Math.min(inicio + itemsPorColumna, data.length);
-            const columna = data.slice(inicio, fin);
-
-            if (columna.length > 0) {
-                columnas.push(columna);
-            }
-        }
-
-        return columnas;
-    };
-
-    const handleBarClick = useCallback(
-        (data: any, estadoKey: string, region: string) => {
-            if (!data || !data.distribuidor) return;
-
-            const distribuidor = data.distribuidor;
-            const estadoLabel = estadoKey;
-
+    const handleSegmentClick = useCallback(
+        (fila: Fila, estado: (typeof ESTADOS)[number], region: string) => {
             setActiveBar({
                 region,
-                distribuidor,
-                estado: estadoLabel,
+                distribuidor: fila.nombre,
+                estado: estado.label,
             });
-
-            setDistribuidorFilter(distribuidor);
-            onDistribuidorClick?.(distribuidor);
-
-            const estadoMapeado = ESTADO_MAPEO_TABLA[estadoLabel] || estadoLabel;
-            setEstadoFilter(estadoMapeado);
-            onEstadoClick?.(estadoMapeado);
+            setDistribuidorFilter(fila.nombre);
+            onDistribuidorClick?.(fila.nombre);
+            setEstadoFilter(estado.tabla);
+            onEstadoClick?.(estado.tabla);
         },
-        [setDistribuidorFilter, setEstadoFilter, onDistribuidorClick, onEstadoClick]
+        [setDistribuidorFilter, setEstadoFilter, onDistribuidorClick, onEstadoClick],
     );
 
-    const handleDistribuidorLabelClick = useCallback(
-        (distribuidor: string) => {
-            setDistribuidorFilter(distribuidor);
-            onDistribuidorClick?.(distribuidor);
+    const handleNameClick = useCallback(
+        (nombre: string) => {
+            setDistribuidorFilter(nombre);
+            onDistribuidorClick?.(nombre);
             setActiveBar(null);
         },
-        [setDistribuidorFilter, onDistribuidorClick]
+        [setDistribuidorFilter, onDistribuidorClick],
     );
 
-    if (isLoading) {
+    if (isLoading) return <Skeletons />;
+
+    const regionesRaw = data?.data?.[0]?.regiones;
+    if (error || !regionesRaw) {
         return (
-            <div className="flex flex-col gap-6 py-4 animate-pulse">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-                    {[...Array(4)].map((_, i) => (
-                        <TarjetaPequenaSkeleton key={i} />
-                    ))}
-                    <TarjetaGrandeSkeleton />
-                </div>
+            <div className={`${card} text-nx-err-ink bg-nx-err-soft`}>
+                Error al cargar los datos de distribuidores
             </div>
         );
     }
 
-    if (error || !data?.data?.[0]?.regiones) {
+    const regiones = Object.keys(regionesRaw)
+        .map((nombre) => {
+            const filas = toFilas(regionesRaw[nombre]);
+            return { nombre, filas, ...sumar(filas) };
+        })
+        .sort((a, b) => b.filas.length - a.filas.length);
+
+    const grande = regiones.length > 1 ? regiones[0] : null;
+    const pequenas = (grande ? regiones.slice(1) : regiones).sort(
+        (a, b) => b.filas.length - a.filas.length,
+    );
+    const filaSuperior = pequenas.slice(0, 3);
+    const columnaIzquierda = pequenas.slice(3);
+
+    const irARegion = (nombre: string) => {
+        const next = regionActiva === nombre ? null : nombre;
+        setRegionActiva(next);
+        if (next)
+            cardRefs.current[next]?.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+            });
+    };
+
+    const renderFila = (
+        fila: Fila,
+        region: string,
+        maxTotal: number,
+        key: string,
+    ) => {
+        const ancho = maxTotal > 0 ? (fila.total / maxTotal) * 100 : 0;
+        const selected = activeBar?.distribuidor === fila.nombre;
+        const segmentos = [
+            { estado: ESTADOS[0], value: fila.zona },
+            { estado: ESTADOS[1], value: fila.energia },
+        ];
+
         return (
-            <Card className="bg-red-50">
-                <CardBody>
-                    <p className="text-red-600">Error al cargar los datos de distribuidores</p>
-                </CardBody>
-            </Card>
+            <li key={key} className="flex flex-col gap-1.5">
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                    <button
+                        type="button"
+                        onClick={() => handleNameClick(fila.nombre)}
+                        className={`truncate text-left font-medium hover:text-nx-purple ${
+                            selected ? "text-nx-purple" : "text-nx-text"
+                        }`}
+                        title={`Filtrar por ${fila.nombre}`}
+                    >
+                        {limpiarNombre(fila.nombre)}
+                    </button>
+                    <span className="flex items-center gap-1.5 tabular-nums font-semibold shrink-0">
+                        <Num value={fila.zona} className="text-nx-err-ink" />
+                        <span className="text-nx-text-3">·</span>
+                        <Num value={fila.energia} className="text-nx-warn-ink" />
+                    </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-nx-surface-2 overflow-hidden">
+                    <div className="flex h-full gap-[2px]" style={{ width: `${ancho}%` }}>
+                        {segmentos
+                            .filter((s) => s.value > 0)
+                            .map((s) => (
+                                <button
+                                    key={s.estado.key}
+                                    type="button"
+                                    aria-label={`${s.estado.label}: ${s.value}`}
+                                    title={`${s.estado.label}: ${s.value}`}
+                                    onClick={() =>
+                                        handleSegmentClick(fila, s.estado, region)
+                                    }
+                                    className={`h-full rounded-full min-w-[4px] cursor-pointer ${s.estado.bar} ${
+                                        selected && activeBar?.estado !== s.estado.label
+                                            ? "opacity-40"
+                                            : ""
+                                    }`}
+                                    style={{ flexGrow: s.value, flexBasis: 0 }}
+                                />
+                            ))}
+                    </div>
+                </div>
+            </li>
         );
-    }
+    };
 
-    const regiones = Object.keys(data.data[0].regiones);
+    const renderCardShell = (
+        r: (typeof regiones)[number],
+        children: React.ReactNode,
+        className = "",
+    ) => (
+        <section
+            key={r.nombre}
+            ref={(el) => {
+                cardRefs.current[r.nombre] = el;
+            }}
+            className={`${card} flex flex-col gap-4 min-h-0 overflow-hidden ${
+                regionActiva === r.nombre ? "ring-2 ring-nx-purple/40" : ""
+            } ${className}`}
+        >
+            <header className="flex items-center justify-between gap-2">
+                <h3 className="text-lg font-bold text-nx-text">{r.nombre}</h3>
+                <div className="flex items-center gap-2">
+                    {activeBar?.region === r.nombre && (
+                        <button
+                            type="button"
+                            onClick={handleClearLocalFilter}
+                            className="text-xs text-nx-purple hover:underline"
+                        >
+                            Limpiar filtro
+                        </button>
+                    )}
+                    <span className="px-3 py-1 rounded-full bg-nx-surface-2 text-xs font-medium text-nx-text-2 tabular-nums">
+                        {formatNumber(r.zona + r.energia)} neveras
+                    </span>
+                </div>
+            </header>
+            {children}
+        </section>
+    );
 
-    const regionesOrdenadas = regiones.sort((a, b) => {
-        const countA = Object.keys(data.data[0].regiones[a]).length;
-        const countB = Object.keys(data.data[0].regiones[b]).length;
-        return countA - countB;
-    });
+    const scrollList = "flex-1 min-h-0 overflow-y-auto pr-1";
 
-    const regionesPequenas = regionesOrdenadas.slice(0, -1);
-    const regionGrande = regionesOrdenadas[regionesOrdenadas.length - 1];
+    const renderRegionPequena = (r: (typeof regiones)[number], className = "") => {
+        const max = Math.max(...r.filas.map((f) => f.total), 0);
+        return renderCardShell(
+            r,
+            <ul className={`${scrollList} flex flex-col gap-3.5`}>
+                {r.filas.map((f) => renderFila(f, r.nombre, max, f.nombre))}
+            </ul>,
+            className,
+        );
+    };
+
+    const renderRegionGrande = (r: (typeof regiones)[number], className = "") => {
+        const max = Math.max(...r.filas.map((f) => f.total), 0);
+        const mitad = Math.ceil(r.filas.length / 2);
+        const columnas = [r.filas.slice(0, mitad), r.filas.slice(mitad)];
+
+        return renderCardShell(
+            r,
+            <div
+                className={`${scrollList} grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3.5 content-start`}
+            >
+                {columnas.map((col, i) => (
+                    <ul key={i} className="flex flex-col gap-3.5">
+                        {col.map((f) => renderFila(f, r.nombre, max, f.nombre))}
+                    </ul>
+                ))}
+            </div>,
+            className,
+        );
+    };
 
     return (
-        <div className="flex flex-col gap-6">
-            <GlobalLegend />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-                {regionesPequenas.map((region) => {
-                    const regionData = data.data[0].regiones[region];
-                    if (!regionData) return null;
-
-                    const chartData = processDataForChart(regionData);
-
-                    const totalNeveras = chartData.reduce((acc, item) => {
-                        const sumaDistribuidor = ESTADOS_PERMITIDOS.reduce((sum, estado) => {
-                            const label = ESTADO_LABELS[estado];
-                            return sum + (Number(item[label]) || 0);
-                        }, 0);
-                        return acc + sumaDistribuidor;
-                    }, 0);
-
-                    const distribuidoresCount = Object.keys(regionData).length;
-                    const chartHeight = Math.max(250, distribuidoresCount * 40);
-
+        <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                {regiones.map((r) => {
+                    const active = regionActiva === r.nombre;
+                    const total = r.zona + r.energia;
                     return (
-                        <Card
-                            key={region}
-                            shadow="none"
-                            className="bg-white h-full min-h-100"
+                        <button
+                            key={r.nombre}
+                            type="button"
+                            onClick={() => irARegion(r.nombre)}
+                            className={`text-left rounded-[1.25rem] p-4 flex flex-col gap-1.5 transition-colors ${
+                                active
+                                    ? "bg-nx-gradient text-white"
+                                    : "bg-nx-surface hover:ring-2 hover:ring-nx-purple/30"
+                            }`}
                         >
-                            <CardBody className="flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-lg font-bold text-gray-800">{region}</h3>
-                                        <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
-                                            {totalNeveras} neveras
-                                        </span>
-                                    </div>
-
-                                    {activeBar?.region === region && (
-                                        <div className="mb-3 p-2 bg-blue-50 rounded-lg text-sm text-blue-700 flex items-center justify-between">
-                                            <span>
-                                                Filtrando: <strong>{activeBar.distribuidor}, {activeBar.estado}</strong>
-                                            </span>
-                                            <button
-                                                onClick={handleClearLocalFilter}
-                                                className="text-blue-500 hover:text-blue-700 underline text-xs"
-                                            >
-                                                Limpiar
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="grow">
-                                    <ResponsiveContainer width="100%" height={chartHeight}>
-                                        <BarChart
-                                            data={chartData}
-                                            layout="vertical"
-                                            margin={{ top: 5, right: 20, left: 30, bottom: 5 }}
-                                            barSize={16}
-                                        >
-                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                            <XAxis type="number" tick={{ fontSize: 10 }} tickLine={false} />
-                                            <YAxis
-                                                type="category"
-                                                dataKey="distribuidor"
-                                                tick={{ fontSize: 10, fontWeight: 600 }}
-                                                tickLine={false}
-                                                axisLine={false}
-                                                width={50}
-                                                onClick={(data: any) => {
-                                                    if (data?.value) handleDistribuidorLabelClick(data.value);
-                                                }}
-                                            />
-                                            <Tooltip content={<CustomTooltip />} />
-
-                                            {ESTADOS_PERMITIDOS.map((estado) => {
-                                                const label = ESTADO_LABELS[estado];
-                                                return (
-                                                    <Bar
-                                                        key={estado}
-                                                        dataKey={label}
-                                                        stackId="a"
-                                                        fill={ESTADO_COLORS[label]}
-                                                        onClick={(data: any) => handleBarClick(data, label, region)}
-                                                        cursor="pointer"
-                                                        radius={[0, 4, 4, 0]}
-                                                    >
-                                                        <LabelList
-                                                            dataKey={label}
-                                                            position="insideRight"
-                                                            style={{ fill: "#fff", fontSize: 9, fontWeight: "bold" }}
-                                                        />
-                                                    </Bar>
-                                                );
-                                            })}
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardBody>
-                        </Card>
+                            <span
+                                className={`flex items-center justify-between text-xs ${
+                                    active ? "text-white/85" : "text-nx-text-3"
+                                }`}
+                            >
+                                {r.nombre}
+                                <ArrowRightUp size={14} />
+                            </span>
+                            <span className="flex items-baseline gap-1.5">
+                                <span
+                                    className={`text-2xl font-bold tabular-nums ${
+                                        active ? "text-white" : "text-nx-text"
+                                    }`}
+                                >
+                                    {formatNumber(total)}
+                                </span>
+                                <span
+                                    className={`text-xs ${
+                                        active ? "text-white/80" : "text-nx-text-3"
+                                    }`}
+                                >
+                                    neveras
+                                </span>
+                            </span>
+                            <span className="flex h-1.5 gap-[2px] mt-1">
+                                {[
+                                    { v: r.zona, c: active ? "bg-white" : "bg-nx-err" },
+                                    {
+                                        v: r.energia,
+                                        c: active ? "bg-white/45" : "bg-nx-warn",
+                                    },
+                                ]
+                                    .filter((s) => s.v > 0)
+                                    .map((s, i) => (
+                                        <span
+                                            key={i}
+                                            className={`h-full rounded-full ${s.c}`}
+                                            style={{ flexGrow: s.v, flexBasis: 0 }}
+                                        />
+                                    ))}
+                            </span>
+                        </button>
                     );
                 })}
-
-                {regionGrande && (() => {
-                    const regionData = data.data[0].regiones[regionGrande];
-                    const chartData = processDataForChart(regionData);
-
-                    const totalNeveras = chartData.reduce((acc, item) => {
-                        const sumaDistribuidor = ESTADOS_PERMITIDOS.reduce((sum, estado) => {
-                            const label = ESTADO_LABELS[estado];
-                            return sum + (Number(item[label]) || 0);
-                        }, 0);
-                        return acc + sumaDistribuidor;
-                    }, 0);
-
-                    const columnas = dividirEnColumnas(chartData);
-                    const tieneMultiplesColumnas = columnas.length > 1;
-
-                    const getColumnHeight = (data: any[]) => {
-                        return Math.max(220, data.length * 30);
-                    };
-
-                    const limpiarNombre = (nombre: string) => {
-                        if (nombre.trim().toLowerCase() === "friohielos") {
-                            return "FRIO HIELOS";
-                        }
-                        return nombre.replace(/^friohielos\s*/gi, "").trim();
-                    };
-                    return (
-                        <div className="col-span-1 md:col-span-2 xl:col-span-3 h-full">
-                            <Card shadow="none" className="bg-white h-full">
-                                <CardBody className="flex flex-col justify-start h-full gap-10">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
-                                        <div className="flex items-center gap-3">
-                                            <h3 className="text-xl font-bold text-gray-800">
-                                                {regionGrande}
-                                            </h3>
-                                            <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
-                                                {totalNeveras} neveras
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            {activeBar?.region === regionGrande && (
-                                                <div className="px-2.5 py-1 bg-blue-50 rounded-lg text-xs text-blue-700 flex items-center gap-2">
-                                                    <span>Filtrando: <strong>{limpiarNombre(activeBar.distribuidor)}</strong></span>
-                                                    <button
-                                                        onClick={handleClearLocalFilter}
-                                                        className="text-blue-500 hover:text-blue-700 underline font-semibold"
-                                                    >
-                                                        Limpiar
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        className={`flex ${tieneMultiplesColumnas
-                                            ? "flex-row gap-1 overflow-x-auto pb-2"
-                                            : "flex-col"
-                                            }`}
-                                    >
-                                        {columnas.map((columna, colIndex) => (
-                                            <div
-                                                key={colIndex}
-                                                className={tieneMultiplesColumnas ? "shrink-0" : ""}
-                                                style={{
-                                                    width: tieneMultiplesColumnas ? "400px" : "100%",
-                                                    minWidth: tieneMultiplesColumnas ? "380px" : "auto",
-                                                }}
-                                            >
-                                                <ResponsiveContainer
-                                                    width="100%"
-                                                    height={getColumnHeight(columna)}
-                                                >
-                                                    <BarChart
-                                                        data={columna}
-                                                        layout="vertical"
-                                                        margin={{ top: 5, right: 15, left: 40, bottom: 5 }}
-                                                        barSize={20}
-                                                    >
-                                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                                        <XAxis type="number" tick={{ fontSize: 9 }} tickLine={false} />
-                                                        <YAxis
-                                                            type="category"
-                                                            dataKey="distribuidor"
-                                                            tickFormatter={limpiarNombre}
-                                                            tick={{
-                                                                fontSize: 9,
-                                                                fontWeight: 600,
-                                                            }}
-                                                            tickLine={false}
-                                                            axisLine={false}
-                                                            width={65}
-                                                            onClick={(data: any) => {
-                                                                if (data?.value) handleDistribuidorLabelClick(data.value);
-                                                            }}
-                                                        />
-                                                        <Tooltip content={<CustomTooltip />} />
-
-                                                        {ESTADOS_PERMITIDOS.map((estado) => {
-                                                            const label = ESTADO_LABELS[estado];
-                                                            return (
-                                                                <Bar
-                                                                    key={estado}
-                                                                    dataKey={label}
-                                                                    stackId="a"
-                                                                    fill={ESTADO_COLORS[label]}
-                                                                    onClick={(data: any) =>
-                                                                        handleBarClick(data, label, regionGrande)
-                                                                    }
-                                                                    cursor="pointer"
-                                                                    radius={[0, 4, 4, 0]}
-                                                                >
-                                                                    <LabelList
-                                                                        dataKey={label}
-                                                                        position="insideRight"
-                                                                        style={{ fill: "#fff", fontSize: 8, fontWeight: "bold" }}
-                                                                    />
-                                                                </Bar>
-                                                            );
-                                                        })}
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardBody>
-                            </Card>
-                        </div>
-                    );
-                })()}
             </div>
+
+            {filaSuperior.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {filaSuperior.map((r) => renderRegionPequena(r, "h-[26rem]"))}
+                </div>
+            )}
+
+            {(columnaIzquierda.length > 0 || grande) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:h-[26rem]">
+                    {columnaIzquierda.length > 0 && (
+                        <div
+                            className="grid gap-4 min-h-0"
+                            style={{
+                                gridTemplateRows: `repeat(${columnaIzquierda.length}, minmax(0, 1fr))`,
+                            }}
+                        >
+                            {columnaIzquierda.map((r) =>
+                                renderRegionPequena(r, "h-[22rem] xl:h-auto"),
+                            )}
+                        </div>
+                    )}
+                    {grande &&
+                        renderRegionGrande(
+                            grande,
+                            `h-[26rem] xl:h-auto md:col-span-2 ${
+                                columnaIzquierda.length > 0
+                                    ? "xl:col-span-2"
+                                    : "xl:col-span-3"
+                            }`,
+                        )}
+                </div>
+            )}
         </div>
     );
 };

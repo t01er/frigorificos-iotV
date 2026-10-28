@@ -1,10 +1,6 @@
-import { useEffect } from "react";
-import mapboxgl from "mapbox-gl";
+import { useEffect, useRef } from "react";
+import type { Map as MapboxMap, GeoJSONSource } from "mapbox-gl";
 import type { Feature, GeoJsonProperties, Point } from "geojson";
-import { createRoot } from "react-dom/client";
-import { Provider } from "react-redux";
-import { store } from "../../../app/store";
-import PopupLayer from "./PopupLayer";
 
 interface Nevera {
   cod_nevera: string;
@@ -15,48 +11,41 @@ interface Nevera {
 }
 
 interface NeveraLayerProps {
-  map: mapboxgl.Map;
+  map: MapboxMap;
   neveras: Nevera[];
+  onSelect?: (codigo: string, estado: number) => void;
 }
 
 export const ESTADO_NEVERA_COLORS: Record<number, string> = {
-  0: "#6B7280", // Por configurar
-  1: "#F28B00", // Fuera de zona
-  2: "#003595", // Cartera
-  3: "#4E95D9", // Censo
-  4: "#00A5E8", // Instalación
-  5: "#7F7F7F", // Taller
-  6: "#A7A7A7", // Distribuidor
-  7: "#FFD200", // Traslado
-  8: "#000000", // Nestlé
-  9: "#9CA3AF", // Mantenimiento
+  0: "#9593ae", // Por configurar
+  1: "#e5484d", // Fuera de zona
+  2: "#7b2ff2", // Cartera
+  3: "#2f6bff", // Censo
+  4: "#22c7ee", // Instalación
+  5: "#17123a", // Taller
+  6: "#5f5d7a", // Distribuidor
+  7: "#e8a21a", // Desconexión de energía
+  8: "#8582a0", // Fuera de línea
+  9: "#c6c4d8", // Mantenimiento
 };
 
+export default function NeveraLayer({ map, neveras, onSelect }: NeveraLayerProps) {
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
-export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
   useEffect(() => {
-    if (!map || !neveras?.length) return;
-
-    interface NeveraFeature extends Feature<Point> {
-      geometry: Point;
-      properties: {
-        color: string;
-        name: string;
-        codigo: string;
-        estado: number;
-      };
-    }
+    if (!map) return;
 
     const geojson: GeoJSON.FeatureCollection<GeoJSON.Point> = {
       type: "FeatureCollection",
-      features: neveras
+      features: (neveras ?? [])
         .map((nevera): Feature<Point, GeoJsonProperties> => ({
           type: "Feature",
           properties: {
             codigo: nevera.cod_nevera,
             distribuidor: nevera.distribuidor,
             estado: nevera.estado_alarma,
-            color: ESTADO_NEVERA_COLORS[nevera.estado_alarma] ?? "#22c55e",
+            color: ESTADO_NEVERA_COLORS[nevera.estado_alarma] ?? "#9593ae",
           },
           geometry: {
             type: "Point",
@@ -73,7 +62,6 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         ),
     };
 
-
     if (!map.isStyleLoaded()) {
       map.once("idle", () => updateLayer());
       return;
@@ -83,7 +71,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
 
     function updateLayer() {
       const source = map.getSource("sensors") as
-        | mapboxgl.GeoJSONSource
+        | GeoJSONSource
         | undefined;
 
       if (source) {
@@ -99,15 +87,46 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         clusterRadius: 100,
       });
 
+      // Halo suave detrás de cada agrupación
+      map.addLayer({
+        id: "clusters-halo",
+        type: "circle",
+        source: "sensors",
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": "#7b2ff2",
+          "circle-opacity": 0.18,
+          "circle-radius": [
+            "step",
+            ["get", "point_count"],
+            26,
+            100,
+            32,
+            1000,
+            40,
+          ],
+          "circle-blur": 0.4,
+        },
+      });
+
       map.addLayer({
         id: "clusters",
         type: "circle",
         source: "sensors",
         filter: ["has", "point_count"],
         paint: {
-          "circle-color": "#95d76a",
-          "circle-radius": 18,
-          "circle-opacity": 0.8,
+          "circle-color": "#7b2ff2",
+          "circle-radius": [
+            "step",
+            ["get", "point_count"],
+            17,
+            100,
+            21,
+            1000,
+            26,
+          ],
+          "circle-stroke-width": 3,
+          "circle-stroke-color": "#ffffff",
         },
       });
 
@@ -118,12 +137,13 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         filter: ["has", "point_count"],
         layout: {
           "text-field": "{point_count_abbreviated}",
+          "text-font": ["DIN Pro Bold", "Arial Unicode MS Bold"],
           "text-size": 12,
           "text-allow-overlap": true,
           "text-ignore-placement": true,
         },
         paint: {
-          "text-color": "black",
+          "text-color": "#ffffff",
         },
       });
 
@@ -135,7 +155,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         paint: {
           "circle-radius": 8,
           "circle-color": ["get", "color"],
-          "circle-stroke-width": 2,
+          "circle-stroke-width": 2.5,
           "circle-stroke-color": "#ffffff",
         },
       });
@@ -148,7 +168,7 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
         if (!features.length) return;
 
         const clusterId = (features[0].properties as any)?.cluster_id;
-        const sourceGeo = map.getSource("sensors") as mapboxgl.GeoJSONSource;
+        const sourceGeo = map.getSource("sensors") as GeoJSONSource;
 
         sourceGeo.getClusterExpansionZoom(clusterId, (err, zoom) => {
           if (err || zoom === null || zoom === undefined) return;
@@ -162,38 +182,32 @@ export default function NeveraLayer({ map, neveras }: NeveraLayerProps) {
       });
 
       map.on("click", "sensor-points", (e) => {
-        if (!e.features?.length) return;
-        const feature = e.features[0] as unknown as NeveraFeature;
+        const feature = e.features?.[0];
+        const props = feature?.properties as
+          | { codigo?: string; estado?: number }
+          | undefined;
+        if (!feature || !props?.codigo) return;
+
         const geometry = feature.geometry as Point;
-        const props = feature.properties;
-        if (!props) return;
-        const container = document.createElement("div");
-        const root = createRoot(container);
-        root.render(
-          <Provider store={store}>
-            <PopupLayer codigo={props.codigo} />
-          </Provider>
-        );
-
-        const popup = new mapboxgl.Popup({
-          maxWidth: "350px",
-        })
-          .setLngLat(geometry.coordinates as [number, number])
-          .setDOMContent(container)
-          .addTo(map);
-
-        popup.on("close", () => root.unmount());
+        map.easeTo({
+          center: geometry.coordinates as [number, number],
+          duration: 500,
+        });
+        onSelectRef.current?.(props.codigo, Number(props.estado));
       });
 
-      map.on("mouseenter", "sensor-points", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-
-      map.on("mouseleave", "sensor-points", () => {
-        map.getCanvas().style.cursor = "";
-      });
+      for (const layer of ["sensor-points", "clusters"]) {
+        map.on("mouseenter", layer, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", layer, () => {
+          map.getCanvas().style.cursor = "";
+        });
+      }
     }
+
     if (map.getLayer("talleres-layer")) {
+      map.moveLayer("clusters-halo");
       map.moveLayer("clusters");
       map.moveLayer("cluster-count");
       map.moveLayer("sensor-points");

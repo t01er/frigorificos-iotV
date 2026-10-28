@@ -3,10 +3,6 @@ import {
   Button,
   Input,
   Spinner,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
   Popover,
   PopoverTrigger,
   PopoverContent,
@@ -20,7 +16,6 @@ import {
 import {
   Magnifier,
   Tuning2,
-  StreetsMapPoint,
   Signpost2,
   UserCheckRounded,
   CloseCircle,
@@ -55,14 +50,8 @@ interface FiltersProps {
   setFilters: (filters: FiltersState) => void;
   onApply: () => void;
   isLoading: boolean;
-
-  showMapStyles?: boolean;
-  mapStyle?: string;
-  setMapStyle?: (value: string) => void;
-  mapStyles?: {
-    label: string;
-    value: string;
-  }[];
+  /** Contenido a la derecha del buscador (chips de grupo) */
+  children?: React.ReactNode;
 }
 
 function DistribuidorMultiSelect({
@@ -200,10 +189,7 @@ export default function Filters({
   onApply,
   setFilters,
   isLoading,
-  showMapStyles,
-  mapStyle,
-  setMapStyle,
-  mapStyles,
+  children,
 }: FiltersProps) {
   const [search, setSearch] = useState(filters.cod_nevera);
 
@@ -233,47 +219,41 @@ export default function Filters({
   };
 
   return (
-    <div className="absolute top-20 right-3 z-20 max-w-xl">
-      <div className="flex items-center gap-2 bg-white rounded-full shadow-lg px-2 py-1.5 w-sm">
-        {showMapStyles && mapStyles && setMapStyle && mapStyle && (
-          <Dropdown backdrop="blur">
-            <DropdownTrigger>
-              <Button
-                variant="flat"
-                isIconOnly
-                title="Estilos de mapa"
-                size="sm"
-                className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 text-gray-600 shrink-0"
-              >
-                <StreetsMapPoint size={18} />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="Estilos de mapa"
-              selectionMode="single"
-              selectedKeys={new Set([mapStyle])}
-              onSelectionChange={(keys) =>
-                setMapStyle(String(Array.from(keys)[0]))
-              }
-            >
-              {mapStyles.map((style) => (
-                <DropdownItem key={style.value}>{style.label}</DropdownItem>
-              ))}
-            </DropdownMenu>
-          </Dropdown>
-        )}
-
+    <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center gap-2 pointer-events-none">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-nx-surface/95 backdrop-blur shadow-lg border border-nx-line/60 pl-4 pr-2 h-12 w-full sm:w-80">
+        <Input
+          aria-label="Buscar código de nevera"
+          placeholder="Buscar código de nevera..."
+          value={search}
+          onValueChange={handleSearchChange}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onApply();
+          }}
+          size="sm"
+          variant="flat"
+          startContent={
+            isLoading ? (
+              <Spinner size="sm" color="primary" />
+            ) : (
+              <Magnifier size={18} className="text-nx-text-3" />
+            )
+          }
+          classNames={{
+            inputWrapper:
+              "bg-transparent shadow-none px-0 data-[hover=true]:bg-transparent group-data-[focus=true]:bg-transparent",
+            input: "text-sm text-nx-text placeholder:text-nx-text-3",
+          }}
+        />
         <Popover placement="bottom-start" size="sm" className="mt-2">
           <PopoverTrigger>
-            <Button
-              variant="flat"
-              title="Filtrar"
-              isIconOnly
-              size="sm"
-              className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 text-gray-600 shrink-0"
+            <button
+              type="button"
+              title="Filtros"
+              aria-label="Filtros"
+              className="size-9 shrink-0 rounded-full bg-nx-surface-2 flex items-center justify-center text-nx-text-2 hover:text-nx-text transition-colors"
             >
               <Tuning2 size={18} />
-            </Button>
+            </button>
           </PopoverTrigger>
           <PopoverContent className="w-sm p-4">
             {() => (
@@ -344,33 +324,9 @@ export default function Filters({
             )}
           </PopoverContent>
         </Popover>
-
-        <Input
-          radius="full"
-          startContent={
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={onApply}
-              className="flex items-center justify-center"
-            >
-              {isLoading ? (
-                <Spinner size="sm" color="primary" />
-              ) : (
-                <Magnifier size={18} />
-              )}
-            </button>
-          }
-          className="flex-1"
-          type="text"
-          placeholder="Codigo Nevera"
-          value={search}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onApply();
-          }}
-          onChange={(e) => handleSearchChange(e.target.value)}
-        />
       </div>
+
+      <div className="pointer-events-auto">{children}</div>
     </div>
   );
 }

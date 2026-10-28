@@ -1,22 +1,39 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import TableComponent, {
     type CustomColumnDef,
-    type FilterFieldDef,
 } from "../../../components/ux/TableComponent";
 import { useGetDeviceQuery, useGetContadorRegistrosPaginasQuery } from "../services/deviceApi";
 import type { DeviceItem } from "../services/deviceApi";
-import { Chip, Button } from "@heroui/react";
+import { MAX_DISPOSITIVOS } from "../../../config/types";
+import {
+    Button,
+    Dropdown,
+    DropdownItem,
+    DropdownMenu,
+    DropdownTrigger,
+    Input,
+} from "@heroui/react";
+import { Magnifier, MenuDots, PenNewRound } from "@solar-icons/react";
 import ModalDispositivoNuevo from "./ModalDispositivoNuevo";
-import { PenNewRound } from "@solar-icons/react";
+import DeviceDetailPanel from "./DeviceDetailPanel";
+import { BateriaCell, EnergiaChip, EstadoBadge, parseBateria } from "./DeviceCells";
 
 const PAGE_SIZE_DEFAULT = 15;
 
+type Segmento = "todos" | "bateria" | "energia";
+
+const SEGMENTOS: { key: Segmento; label: string }[] = [
+    { key: "todos", label: "Todos" },
+    { key: "bateria", label: "Batería baja" },
+    { key: "energia", label: "Sin energía" },
+];
+
+const BATERIA_BAJA = 50;
+
 export default function DeviceTabla() {
-    const [filterValues, setFilterValues] = useState<Record<string, string>>({
-        cod_nevera: "",
-        page: "",
-        size: "",
-    });
+    const [search, setSearch] = useState("");
+    const [codNevera, setCodNevera] = useState("");
+    const [segmento, setSegmento] = useState<Segmento>("todos");
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
     const [sortDescriptor, setSortDescriptor] = useState<{
@@ -28,31 +45,61 @@ export default function DeviceTabla() {
     const [reloadData, setReloadData] = useState(false);
     const [editingDevice, setEditingDevice] = useState<DeviceItem | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [selected, setSelected] = useState<DeviceItem | null>(null);
+
+    // El buscador consulta al servidor con una pequeña espera
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setCodNevera((prev) => {
+                if (prev === search) return prev;
+                setPage(1);
+                return search;
+            });
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [search]);
 
     const { data, isLoading, isFetching, refetch } = useGetDeviceQuery({
-        _cod_nevera: filterValues.cod_nevera,
+        _cod_nevera: codNevera,
         _page: page,
         _size: pageSize,
     });
 
-    const devices = data?.data ?? [];
+    const { data: paginacionData, isLoading: isLoadingPaginacion } =
+        useGetContadorRegistrosPaginasQuery({
+            _cod_nevera: codNevera,
+            _page: page,
+            _size: pageSize,
+        });
 
-    const { data: paginacionData, isLoading: isLoadingPaginacion } = useGetContadorRegistrosPaginasQuery({
-        _cod_nevera: filterValues.cod_nevera,
-        _page: page,
-        _size: pageSize,
-    });
+    const totalRegistros = Math.min(paginacionData?.total_records ?? 0, MAX_DISPOSITIVOS);
 
-    const handleReload = useCallback(() => {
+    const devices = useMemo(() => {
+        // La última página no puede pasar del tope
+        const all = (data?.data ?? []).slice(0, Math.max(0, MAX_DISPOSITIVOS - (page - 1) * pageSize));
+        if (segmento === "bateria")
+            return all.filter((d) => {
+                const pct = parseBateria(d.dis_bateria);
+                return pct !== null && pct < BATERIA_BAJA;
+            });
+        if (segmento === "energia")
+            return all.filter((d) => d.dis_energia !== "Conectado");
+        return all;
+    }, [data, segmento, page, pageSize]);
+
+    useEffect(() => {
         if (reloadData) {
             refetch();
             setReloadData(false);
         }
     }, [reloadData, refetch]);
 
-    useState(() => {
-        handleReload();
-    });
+    // Panel de detalle: el seleccionado (actualizado con los datos nuevos) o el primero
+    const current = useMemo(
+        () =>
+            devices.find((d) => d.dis_id === selected?.dis_id) ?? devices[0] ?? null,
+        [devices, selected],
+    );
 
     const handleOpenModal = useCallback(() => {
         setIsEditing(false);
@@ -82,165 +129,183 @@ export default function DeviceTabla() {
 
     const columns: CustomColumnDef<DeviceItem>[] = useMemo(
         () => [
-            { key: "dis_cod_nevera", label: "Cod Nevera", width: 130 },
-            { key: "dis_imei", label: "IMEI", width: 130 },
-            { key: "dis_distribuidor", label: "Distribuidor", width: 130 },
-            { key: "dis_loc_nom", label: "Locación", width: 130 },
+            {
+                key: "dis_cod_nevera",
+                label: "Cód. nevera",
+                width: 140,
+                render: (item) => {
+                    const active = item.dis_id === current?.dis_id;
+                    return (
+                        <span
+                            className={`inline-flex items-center gap-2 font-bold ${
+                                active ? "text-nx-purple" : "text-nx-text"
+                            }`}
+                        >
+                            {active && (
+                                <span className="w-[3px] h-4 rounded-full bg-nx-purple -ml-2" />
+                            )}
+                            {item.dis_cod_nevera}
+                        </span>
+                    );
+                },
+            },
+            { key: "dis_imei", label: "IMEI", width: 150 },
+            { key: "dis_distribuidor", label: "Distribuidor", width: 160 },
             {
                 key: "dis_bateria",
                 label: "Batería",
                 width: 140,
-                render: (item) => {
-                    const value = item.dis_bateria ?? "";
-                    const pct = Number(value.replace("%", "").trim());
-
-                    if (Number.isNaN(pct)) {
-                        return (
-                            <span className="text-xs text-slate-500">
-                                {value}
-                            </span>
-                        );
-                    }
-
-                    const color =
-                        pct > 50
-                            ? "bg-green-500"
-                            : pct > 20
-                                ? "bg-amber-500"
-                                : "bg-red-500";
-
-                    return (
-                        <div className="flex items-center gap-2">
-                            <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                    className={`h-full ${color}`}
-                                    style={{ width: `${pct}%` }}
-                                />
-                            </div>
-                            <span className="text-xs text-slate-500">
-                                {pct}%
-                            </span>
-                        </div>
-                    );
-                },
+                render: (item) => <BateriaCell value={item.dis_bateria} />,
             },
             {
                 key: "dis_energia",
                 label: "Energía",
-                width: 100,
-                align: "start",
-                render: (item) => (
-                    <div className="flex items-center gap-1">
-                        {item.dis_energia === "Conectado" ? (
-                            <span className="flex items-center gap-1 text-amber-600">
-                                <span>ON</span>
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-1 text-slate-400">
-                                <span>OFF</span>
-                            </span>
-                        )}
-                    </div>
-                ),
+                width: 90,
+                render: (item) => <EnergiaChip value={item.dis_energia} />,
             },
-            { key: "dis_latitud", label: "Latitud", width: 130 },
-            { key: "dis_longitud", label: "Longitud", width: 130 },
-            { key: "dis_geozona", label: "Geozona", width: 130 },
-            { key: "dis_movimiento", label: "Movimiento", width: 130 },           
+            { key: "dis_geozona", label: "Geozona", width: 100 },
+            { key: "dis_movimiento", label: "Movimiento", width: 120 },
             {
                 key: "dis_estado",
                 label: "Estado",
-                width: 130,
-                align: "center",
-                render: (item) => {
-                    const estado = item.dis_estado?.toLowerCase();
-                    const map: Record<string, "success" | "danger" | "warning" | "default"> = {
-                        activo: "success",
-                        inactivo: "danger",
-                        desconocido: "warning",
-                    };
-                    return (
-                        <Chip size="sm" variant="solid" color={map[estado] ?? "default"}>
-                            {item.dis_estado}
-                        </Chip>
-                    );
-                },
+                width: 120,
+                render: (item) => <EstadoBadge estado={item.dis_estado} />,
             },
-            { key: "dis_version", label: "Versión", width: 130 },
-            { key: "dis_cliente", label: "Cliente", width: 130 },
-             { key: "dis_iccid", label: "ICCID", width: 130 },
             {
                 key: "acciones",
-                label: "Acciones",
-                width: 100,
+                label: "",
+                width: 56,
                 align: "center",
                 render: (item) => (
-                    <Button
-                        size="sm"
-                        variant="light"
-                        color="primary"
-                        onPress={() => handleEditDevice(item)}
-                        startContent={
-                            <PenNewRound size={17} />
-                        }
-                    >
-                        Editar
-                    </Button>
+                    <span onClick={(e) => e.stopPropagation()}>
+                        <Dropdown placement="bottom-end">
+                            <DropdownTrigger>
+                                <button
+                                    type="button"
+                                    aria-label="Acciones"
+                                    className="size-8 rounded-full flex items-center justify-center text-nx-text-3 hover:text-nx-text hover:bg-nx-surface-2 transition-colors"
+                                >
+                                    <MenuDots size={18} />
+                                </button>
+                            </DropdownTrigger>
+                            <DropdownMenu
+                                aria-label="Acciones del dispositivo"
+                                onAction={() => handleEditDevice(item)}
+                            >
+                                <DropdownItem
+                                    key="editar"
+                                    startContent={<PenNewRound size={16} />}
+                                >
+                                    Editar
+                                </DropdownItem>
+                            </DropdownMenu>
+                        </Dropdown>
+                    </span>
                 ),
             },
         ],
-        [handleEditDevice]
+        [handleEditDevice, current?.dis_id],
     );
 
-    const filters: FilterFieldDef[] = [
-        { key: "cod_nevera", type: "text", placeholder: "Cod Nevera" },
-    ];
-
-    const totalRegistros = paginacionData?.total_records ?? 0;
-
     return (
-        <>
-            <TableComponent
-                data={devices}
-                columns={columns}
-                idField="dis_id"
-                filters={filters}
-                filterValues={filterValues}
-                headerActions={
-                    <Button
-                        color="primary"
-                        size="sm"
-                        onPress={handleOpenModal}
-                        startContent={<span>+</span>}
-                    >
-                        Nuevo Dispositivo
-                    </Button>
-                }
-                onFilterChange={(key, value) => {
-                    setFilterValues((prev) => ({ ...prev, [key]: value }));
-                    setPage(1);
-                }}
-                onClearFilters={() => {
-                    setFilterValues({
-                        cod_nevera: "",
-                    });
-                    setPage(1);
-                }}
-                sortDescriptor={sortDescriptor}
-                onSortChange={(d) => {
-                    setSortDescriptor(d);
-                    setPage(1);
-                }}
-                page={page}
-                pageSize={pageSize}
-                totalRegistros={totalRegistros}
-                onPageChange={setPage}
-                onPageSizeChange={(size) => {
-                    setPageSize(size);
-                    setPage(1);
-                }}
-                isLoading={isLoading || isFetching || isLoadingPaginacion}
-            />
+        <div className="flex flex-col gap-4">
+            <header className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h1 className="text-3xl font-bold text-nx-text">Dispositivos</h1>
+                    <p className="text-sm text-nx-text-3">
+                        Configura y supervisa los{" "}
+                        {totalRegistros.toLocaleString("es-ES", {
+                            useGrouping: "always",
+                        })}{" "}
+                        dispositivos registrados
+                    </p>
+                </div>
+                <Button
+                    radius="full"
+                    className="bg-nx-gradient text-white font-semibold"
+                    startContent={<span className="text-lg leading-none">+</span>}
+                    onPress={handleOpenModal}
+                >
+                    Nuevo dispositivo
+                </Button>
+            </header>
+
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
+                <TableComponent
+                    title="Registrados"
+                    count={totalRegistros}
+                    itemLabel="dispositivos"
+                    data={devices}
+                    columns={columns}
+                    idField="dis_id"
+                    filterValues={{}}
+                    onFilterChange={() => undefined}
+                    onRowClick={setSelected}
+                    selectedId={current?.dis_id}
+                    headerActions={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex items-center gap-0.5 rounded-full bg-nx-surface-2 p-1">
+                                {SEGMENTOS.map((seg) => (
+                                    <button
+                                        key={seg.key}
+                                        type="button"
+                                        aria-pressed={segmento === seg.key}
+                                        onClick={() => setSegmento(seg.key)}
+                                        className={`h-8 px-3.5 rounded-full text-xs font-medium transition-colors ${
+                                            segmento === seg.key
+                                                ? "bg-nx-surface text-nx-text font-semibold"
+                                                : "text-nx-text-2 hover:text-nx-text"
+                                        }`}
+                                    >
+                                        {seg.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <Input
+                                aria-label="Buscar por código de nevera"
+                                placeholder="Cód. nevera"
+                                value={search}
+                                onValueChange={setSearch}
+                                isClearable
+                                radius="full"
+                                variant="flat"
+                                className="w-44"
+                                startContent={
+                                    <Magnifier size={15} className="text-nx-text-3" />
+                                }
+                                classNames={{
+                                    inputWrapper:
+                                        "bg-nx-surface-2 shadow-none h-10 min-h-10",
+                                    input: "text-sm",
+                                }}
+                            />
+                        </div>
+                    }
+                    sortDescriptor={sortDescriptor}
+                    onSortChange={(d) => {
+                        setSortDescriptor(d);
+                        setPage(1);
+                    }}
+                    page={page}
+                    pageSize={pageSize}
+                    totalRegistros={totalRegistros}
+                    onPageChange={setPage}
+                    onPageSizeChange={(size) => {
+                        setPageSize(size);
+                        setPage(1);
+                    }}
+                    isLoading={isLoading || isFetching || isLoadingPaginacion}
+                />
+
+                {current && (
+                    <DeviceDetailPanel
+                        device={current}
+                        onConfigure={() => handleEditDevice(current)}
+                        onRefresh={() => refetch()}
+                        isRefreshing={isFetching}
+                    />
+                )}
+            </div>
 
             <ModalDispositivoNuevo
                 isOpen={isModalOpen}
@@ -250,6 +315,6 @@ export default function DeviceTabla() {
                 editingDevice={editingDevice}
                 isEditing={isEditing}
             />
-        </>
+        </div>
     );
 }

@@ -1,25 +1,39 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import TableComponent, {
     type CustomColumnDef,
     type FilterFieldDef,
 } from "../../../components/ux/TableComponent";
 import { useGetAlertsHistoricalQuery, useGetAlertsHistoricalCountQuery } from "../services/alertsApi";
 import type { AlertsFilters, AlertsItem } from "../services/alertsApi";
-import { Chip, type DateValue } from "@heroui/react";
+import type { DateValue } from "@heroui/react";
 import MapModal from "../../dashboard/components/MapModal";
-import { StreetsMapPoint } from "@solar-icons/react";
-import DownloadButton from "../../../components/ux/DownloadButton";
-import { DOWNLOAD_CONFIGS } from "../../../config/downloads";
-
+import {
+    Buildings,
+    Bell,
+    Calendar,
+    Hashtag,
+    MapPoint,
+    Delivery,
+    Magnifier,
+} from "@solar-icons/react";
+import { BatteryCell } from "../../dashboard/components/NeveraCells";
+import { EventoChip, SatelitesCell, SenialCell } from "./AlertCells";
+import { formatFechaHora } from "../../../utils/fecha";
 
 const PAGE_SIZE_DEFAULT = 15;
+const POLLING_MS = 30000;
 
 const formatDate = (date: DateValue | null) => {
     if (!date) return "";
     return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
 };
 
-export default function AlertsTabla() {
+interface AlertsTablaProps {
+    /** Se llama con la marca de tiempo de cada actualización de datos */
+    onLastUpdate?: (timestamp: number) => void;
+}
+
+export default function AlertsTabla({ onLastUpdate }: AlertsTablaProps) {
     const [selectedAlert, setSelectedAlert] = useState<AlertsItem | null>(null);
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
@@ -80,9 +94,16 @@ export default function AlertsTabla() {
         _size: pageSize,
     };
 
-    const { data, isLoading, isFetching } = useGetAlertsHistoricalQuery(queryFilters);
+    const { data, currentData, isError, fulfilledTimeStamp } =
+        useGetAlertsHistoricalQuery(queryFilters, { pollingInterval: POLLING_MS });
     const { data: countData, isLoading: isCountLoading } = useGetAlertsHistoricalCountQuery(countFilters);
 
+    useEffect(() => {
+        if (fulfilledTimeStamp) onLastUpdate?.(fulfilledTimeStamp);
+    }, [fulfilledTimeStamp, onLastUpdate]);
+
+    // Con el sondeo en segundo plano se siguen mostrando los datos anteriores,
+    // sin loader; solo se muestra al cargar por primera vez o al cambiar filtros/página.
     const alerts = data?.data ?? [];
     const totalRegistros = countData?.total_records ?? 0;
 
@@ -106,73 +127,46 @@ export default function AlertsTabla() {
 
     const columns: CustomColumnDef<AlertsItem>[] = useMemo(
         () => [
-            { key: "alert_dis_cod_nevera", label: "Cod. Nevera", width: 130, sortable: false },
-            { key: "alert_dis_imei", label: "IMEI", width: 130, sortable: false },
-            { key: "alert_dis_distribuidor", label: "Distribuidor", width: 130, sortable: false },
-            { key: "alert_dis_fechahora", label: "Fecha Evento", width: 130, sortable: true },
             {
-                key: "alert_evento",
-                label: "Evento",
+                key: "alert_dis_cod_nevera",
+                label: "Cód. nevera",
                 width: 130,
                 sortable: false,
-                align: "center",
+                render: (item) => (
+                    <span className="font-bold text-nx-text">{item.alert_dis_cod_nevera}</span>
+                ),
+            },
+            { key: "alert_dis_distribuidor", label: "Distribuidor", width: 150, sortable: false },
+            {
+                key: "alert_dis_fechahora",
+                label: "Fecha evento",
+                width: 200,
+                sortable: true,
                 render: (item) => {
-                    const estado = item.alert_evento?.toLowerCase();
-                    const map: Record<string, "secondary" | "danger" | "warning" | "default"> = {
-                        "desconexión por energía": "warning",
-                        "detenido fuera de zona": "danger",
-                        "movimiento fuera de zona": "secondary",
-                    };
+                    const f = formatFechaHora(item.alert_dis_fechahora);
+                    if (!f) return <span>{item.alert_dis_fechahora}</span>;
                     return (
-                        <Chip size="sm" variant="light" color={map[estado] ?? "default"}>
-                            {item.alert_evento}
-                        </Chip>
+                        <span>
+                            {f.fecha}{" "}
+                            <span className="text-nx-text-3 text-xs tabular-nums">{f.hora}</span>
+                        </span>
                     );
                 },
             },
-            { key: "alert_loc_nom", label: "Locación", width: 130, sortable: false },
+            {
+                key: "alert_evento",
+                label: "Evento",
+                width: 170,
+                sortable: false,
+                render: (item) => <EventoChip evento={item.alert_evento} />,
+            },
+            { key: "alert_loc_nom", label: "Locación", width: 140, sortable: false },
             {
                 key: "alert_dis_bateria",
                 sortable: false,
                 label: "Batería",
                 width: 140,
-                render: (item) => {
-                    const rawValue = item.alert_dis_bateria?.trim();
-                    if (!rawValue) return <span className="text-xs text-slate-500">N/A</span>;
-
-                    const pct = Number(rawValue.replace("%", "").trim());
-
-                    if (Number.isNaN(pct)) {
-                        return <span className="text-xs text-slate-500">{rawValue}</span>;
-                    }
-
-                    const color = pct > 50 ? "bg-green-500" : pct > 20 ? "bg-amber-500" : "bg-red-500";
-
-                    return (
-                        <div className="flex items-center gap-2">
-                            <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className="text-xs text-slate-500">{pct}%</span>
-                        </div>
-                    );
-                },
-            },
-            {
-                key: "alert_dis_energia",
-                label: "Energía",
-                sortable: false,
-                width: 100,
-                align: "start",
-                render: (item) => (
-                    <div className="flex items-center gap-1">
-                        {item.alert_dis_energia === "Conectado" ? (
-                            <span className="text-green-600 font-medium">ON</span>
-                        ) : (
-                            <span className="text-slate-400 font-medium">OFF</span>
-                        )}
-                    </div>
-                ),
+                render: (item) => <BatteryCell value={item.alert_dis_bateria} />,
             },
             {
                 key: "ubicacion",
@@ -182,39 +176,58 @@ export default function AlertsTabla() {
                 render: (item) => {
                     const lat = item.alert_dis_lat;
                     const lon = item.alert_dis_lon;
-                    const hasCoords = lat && lon;
 
                     return (
                         <button
                             type="button"
                             onClick={() => handleOpenMap(item)}
-                            className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition-colors font-medium text-xs hover:underline group"
+                            className="inline-flex items-center gap-1.5 text-nx-blue hover:underline text-xs"
                             title="Ver ubicación en el mapa"
                         >
-                            <StreetsMapPoint className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform shrink-0" />
-                            <span>
-                                {hasCoords ? `${lat}, ${lon}` : "Ver en mapa"}
+                            <MapPoint size={14} className="shrink-0" />
+                            <span className="font-mono">
+                                {lat && lon ? `${lat}, ${lon}` : "Ver en mapa"}
                             </span>
                         </button>
                     );
                 },
             },
-            { key: "alert_dis_signal", label: "Señal", width: 130, sortable: false },
-            { key: "alert_dis_satelite", label: "Satélite", width: 130, sortable: false },
-            { key: "alert_movimiento", label: "Movimiento", width: 130, sortable: false },
-            { key: "alert_dis_cliente", label: "Cliente", width: 130, sortable: false },
+            {
+                key: "alert_dis_signal",
+                label: "Señal",
+                width: 90,
+                sortable: false,
+                render: (item) => <SenialCell value={item.alert_dis_signal} />,
+            },
+            {
+                key: "alert_dis_satelite",
+                label: "Satélites",
+                width: 100,
+                sortable: false,
+                render: (item) => <SatelitesCell value={item.alert_dis_satelite} />,
+            },
+            { key: "alert_movimiento", label: "Movimiento", width: 120, sortable: false },
+            {
+                key: "alert_dis_cliente",
+                label: "Cliente",
+                width: 110,
+                sortable: false,
+                render: (item) => (
+                    <span className="text-nx-text-3 tabular-nums">{item.alert_dis_cliente}</span>
+                ),
+            },
         ],
         [handleOpenMap]
     );
 
     const filters: FilterFieldDef[] = [
-        { key: "_cod_nevera", type: "text", placeholder: "Cod Nevera" },
-        { key: "_cliente", type: "text", placeholder: "Cliente" },
-        { key: "_distribuidor", type: "text", placeholder: "Distribuidor" },
-        { key: "_evento", type: "text", placeholder: "Evento" },
-        { key: "_fecha", type: "date", placeholder: "Fecha" },
-        { key: "_imei", type: "text", placeholder: "IMEI" },
-        { key: "_locacion", type: "text", placeholder: "Locación" },
+        { key: "_cod_nevera", type: "text", placeholder: "Cód. nevera", icon: <Magnifier size={15} /> },
+        { key: "_cliente", type: "text", placeholder: "Cliente", icon: <Buildings size={15} /> },
+        { key: "_distribuidor", type: "text", placeholder: "Distribuidor", icon: <Delivery size={15} /> },
+        { key: "_evento", type: "text", placeholder: "Evento", icon: <Bell size={15} /> },
+        { key: "_fecha", type: "date", placeholder: "Fecha", icon: <Calendar size={15} /> },
+        { key: "_imei", type: "text", placeholder: "IMEI", icon: <Hashtag size={15} /> },
+        { key: "_locacion", type: "text", placeholder: "Locación", icon: <MapPoint size={15} /> },
     ];
 
     const alertsWithUniqueId = useMemo(() => {
@@ -230,7 +243,10 @@ export default function AlertsTabla() {
                 data={alertsWithUniqueId}
                 columns={columns}
                 idField="_uniqueId"
+                itemLabel="alertas"
                 filters={filters}
+                fillFilters
+                clearIconOnly
                 filterValues={draftFilters as Record<string, string>}
                 onFilterChange={(key, value) => {
                     if (key === "_fecha") return;
@@ -244,16 +260,6 @@ export default function AlertsTabla() {
                     setSortDescriptor(d);
                     setPage(1);
                 }}
-                headerActions={
-                    <DownloadButton
-                        url={DOWNLOAD_CONFIGS.alertasActivas.url}
-                        label=""
-                        isIconOnly={true}
-                        tooltip="Descargar Alertas Activas"
-                        color="primary"
-                        rolesPermitidos={DOWNLOAD_CONFIGS.censo.rolesPermitidos}
-                    />
-                }
                 page={page}
                 pageSize={pageSize}
                 totalRegistros={totalRegistros}
@@ -264,7 +270,7 @@ export default function AlertsTabla() {
                 }}
                 dateValue={dateValue}
                 onDateChange={handleDateChange}
-                isLoading={isLoading || isFetching || isCountLoading}
+                isLoading={(!currentData && !isError) || isCountLoading}
             />
 
             <MapModal

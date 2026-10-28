@@ -1,17 +1,18 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import TableComponent, {
     type CustomColumnDef,
     type ColumnGroupDef,
     type FilterFieldDef,
 } from "../../../components/ux/TableComponent";
 import { useGetNeverasDashboardQuery, useGetContadorRegistrosPaginasQuery } from "../services/mapApi";
+import { MAX_DISPOSITIVOS } from "../../../config/types";
 import type { NeveraDashboardItem } from "../services/mapApi";
 import { ESTADO_OPTIONS_TABLE, ESTADOS_NEVERA } from "../services/estadoNeveraConstants";
 import { useNeveraFilterContext } from "../contexts/NeveraFilterContext";
+import { BatteryCell, EnergiaCell, EstadoChip, MovimientoCell } from "./NeveraCells";
 import MapModal from "../../dashboard/components/MapModal";
 import RecorridoMapModal from "../../dashboard/components/RecorridoMapModal";
-import DownloadButton from "../../../components/ux/DownloadButton";
-import { DOWNLOAD_CONFIGS } from "../../../config/downloads";
 
 const PAGE_SIZE_DEFAULT = 15;
 
@@ -93,7 +94,7 @@ export default function NeverasTabla({
 
     const { data: paginacionData, isLoading: isLoadingPaginacion } = useGetContadorRegistrosPaginasQuery(queryFilters);
 
-    const totalRegistros = paginacionData?.total_records ?? 0;
+    const totalRegistros = Math.min(paginacionData?.total_records ?? 0, MAX_DISPOSITIVOS);
 
     useEffect(() => {
         if (externalFilter) {
@@ -152,28 +153,8 @@ export default function NeverasTabla({
         }
     };
 
-    const neveras = data?.data ?? [];
-
-    const getDownloadPayload = useCallback(() => {
-        return {
-            _cod_nevera: filterValues.cod_nevera || "",
-            _imei: filterValues.imei || "",
-            _locacion: filterValues.locacion || "",
-            _distribuidor: filterValues.distribuidor || "",
-            _estado: filterValues.estado || "",
-            _movimiento: "",
-            _order: sortDescriptor.column,
-            _or: sortDescriptor.direction === "descending" ? "desc" : "asc",
-            _page: 1,
-            _size: 9999
-        };
-    }, [filterValues, sortDescriptor]);
-
-    const [downloadBody, setDownloadBody] = useState(getDownloadPayload());
-
-    useEffect(() => {
-        setDownloadBody(getDownloadPayload());
-    }, [getDownloadPayload]);
+    // La última página no puede pasar del tope
+    const neveras = (data?.data ?? []).slice(0, Math.max(0, MAX_DISPOSITIVOS - (page - 1) * pageSize));
 
     const [selectedCodNevera, setSelectedCodNevera] = useState<string | null>(null);
 
@@ -187,70 +168,37 @@ export default function NeverasTabla({
     );
 
 
-    function getRangoUltimoMes() {
-        const pad = (n: number) => String(n).padStart(2, "0");
-        const format = (d: Date) =>
-            `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
-            `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-
-        const hoy = new Date();
-        const haceUnMes = new Date(hoy);
-        haceUnMes.setMonth(haceUnMes.getMonth() - 1);
-
-        return {
-            fechaInicio: format(haceUnMes),
-            fechaFin: format(hoy),
-        };
-    }
-
-    function formatFechaParaNombre(d: Date) {
-        const pad = (n: number) => String(n).padStart(2, "0");
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    }
-
-    function getRangoUltimoMesParaNombre() {
-        const hoy = new Date();
-        const haceUnMes = new Date(hoy);
-        haceUnMes.setMonth(haceUnMes.getMonth() - 1);
-
-        return {
-            fechaInicio: formatFechaParaNombre(haceUnMes),
-            fechaFin: formatFechaParaNombre(hoy),
-        };
-    }
-    
-    const getBitacoraBody = useCallback(() => {
-        const { fechaInicio, fechaFin } = getRangoUltimoMes();
-        return {
-            fechaInicio,
-            fechaFin,
-        };
-    }, []);
-
-    const getBitacoraFileName = useCallback(() => {
-        const { fechaInicio, fechaFin } = getRangoUltimoMesParaNombre();
-        return `Bitacora_${fechaInicio}_al_${fechaFin}.zip`;
-    }, []);
-
     const columns: CustomColumnDef<NeveraDashboardItem>[] = useMemo(
         () => [
-            { key: "dis_cod_nevera", label: "Código Nevera", width: 130, sticky: true, sortable: false },
+            {
+                key: "dis_cod_nevera",
+                label: "Código",
+                width: 120,
+                sticky: true,
+                sortable: false,
+                render: (item) => (
+                    <Link
+                        to={`/dashboard/neveras/${encodeURIComponent(item.dis_cod_nevera)}`}
+                        className="font-bold text-nx-text hover:text-nx-purple hover:underline transition-colors"
+                        title="Ver detalle de la nevera"
+                    >
+                        {item.dis_cod_nevera}
+                    </Link>
+                ),
+            },
             {
                 key: "dis_imei",
                 label: "IMEI",
                 sortable: false,
-                width: 150,
+                width: 160,
                 sticky: true,
                 render: (item) => (
                     <button
                         type="button"
                         onClick={() =>
-                            handleOpenRecorrido(
-                                item.dis_imei,
-                                item.dis_cod_nevera
-                            )
+                            handleOpenRecorrido(item.dis_imei, item.dis_cod_nevera)
                         }
-                        className="text-blue-600 underline font-medium hover:text-blue-800 transition-colors"
+                        className="font-mono text-xs text-nx-text-2 hover:text-nx-purple hover:underline transition-colors"
                         title="Ver recorrido del dispositivo"
                     >
                         {item.dis_imei}
@@ -263,41 +211,26 @@ export default function NeverasTabla({
             { key: "dis_ult_conex", label: "Última Transmisión", width: 150, sortable: true, },
 
             {
-                key: "dis_latitud_actual",
-                label: "Latitud",
+                key: "dis_coordenadas",
+                label: "Coordenadas",
                 sortable: false,
-                width: 130,
+                width: 190,
                 render: (item) => (
                     <button
                         type="button"
                         onClick={() => handleOpenMap(item)}
-                        className="text-blue-600 underline font-medium hover:text-blue-800 transition-colors"
+                        className="font-mono text-xs text-nx-blue hover:underline transition-colors"
+                        title="Ver en el mapa"
                     >
-                        {item.dis_latitud_actual}
+                        {item.dis_latitud_actual}, {item.dis_longitud_actual}
                     </button>
                 ),
             },
 
-            {
-                key: "dis_longitud_actual",
-                label: "Longitud",
-                sortable: false,
-                width: 130,
-                render: (item) => (
-                    <button
-                        type="button"
-                        onClick={() => handleOpenMap(item)}
-                        className="text-blue-600 underline font-medium hover:text-blue-800 transition-colors"
-                    >
-                        {item.dis_longitud_actual}
-                    </button>
-                ),
-            },
-
-            { key: "dis_estado", label: "Estado", width: 170, sortable: false, },
-            { key: "dis_movimiento", label: "Movimiento", width: 110, sortable: true, },
-            { key: "dis_bateria", label: "Batería", width: 100, sortable: true, },
-            { key: "dis_energia", label: "Energía", width: 110, sortable: false, },
+            { key: "dis_estado", label: "Estado", width: 170, sortable: false, render: (item) => <EstadoChip estado={item.dis_estado} /> },
+            { key: "dis_movimiento", label: "Movimiento", width: 130, sortable: true, render: (item) => <MovimientoCell movimiento={item.dis_movimiento} /> },
+            { key: "dis_bateria", label: "Batería", width: 140, sortable: true, render: (item) => <BatteryCell value={item.dis_bateria} /> },
+            { key: "dis_energia", label: "Energía", width: 130, sortable: false, render: (item) => <EnergiaCell value={item.dis_energia} /> },
             { key: "dis_desconexiones", label: "Desconexiones", width: 130, sortable: false, },
             { key: "dis_senial_celular", label: "Señal Celular", width: 120, sortable: false, },
             { key: "dis_senial_gps", label: "Señal GPS", width: 120, sortable: false, },
@@ -334,8 +267,7 @@ export default function NeverasTabla({
             label: "Última Data",
             columnKeys: [
                 "dis_ult_conex",
-                "dis_latitud_actual",
-                "dis_longitud_actual",
+                "dis_coordenadas",
                 "dis_estado",
                 "dis_movimiento",
                 "dis_bateria",
@@ -411,6 +343,9 @@ export default function NeverasTabla({
     return (
         <div>
             <TableComponent
+                title="Inventario de neveras"
+                count={totalRegistros}
+                itemLabel="neveras"
                 data={neveras}
                 columns={columns}
                 columnGroups={columnGroups}
@@ -424,51 +359,6 @@ export default function NeverasTabla({
                     setSortDescriptor(d);
                     setPage(1);
                 }}
-                headerActions={
-                    <div className="flex gap-1">
-                        <DownloadButton
-                            url={DOWNLOAD_CONFIGS.censo.url}
-                            label="Censo"
-                            tooltip="Descargar Censo Actualizado"
-                            color="success"
-                            rolesPermitidos={DOWNLOAD_CONFIGS.censo.rolesPermitidos}
-                        />
-                        <DownloadButton
-                            url={DOWNLOAD_CONFIGS.cartera.url}
-                            label="Cartera"
-                            tooltip="Descargar Cartera"
-                            color="primary"
-                            rolesPermitidos={DOWNLOAD_CONFIGS.cartera.rolesPermitidos}
-                        />
-                        <DownloadButton
-                            url={DOWNLOAD_CONFIGS.bitacora.url}
-                            label="Bitacora"
-                            tooltip="Descargar Bitácora (último mes) - ZIP"
-                            color="default"
-                            method="POST"
-                            body={getBitacoraBody()}
-                            fileName={getBitacoraFileName()}
-                            rolesPermitidos={DOWNLOAD_CONFIGS.bitacora.rolesPermitidos}
-                            showConfirmDialog={true}
-                            confirmMessage={
-                                "Esta operación generará un archivo comprimido (.zip) con la bitácora del último mes y puede tardar unos minutos.\n\n¿Está seguro de proceder?"
-                            }
-                            onDownloadStart={() => console.log("Iniciando descarga de bitácora...")}
-                            onDownloadComplete={() => console.log("Bitácora descargada")}
-                            onError={(error) => console.error("Error en descarga de bitácora:", error)}
-                        />
-                        <DownloadButton
-                            url={DOWNLOAD_CONFIGS.neverasDashboard.url}
-                            label="Neveras"
-                            tooltip="Descargar lista general de neveras"
-                            color="primary"
-                            rolesPermitidos={DOWNLOAD_CONFIGS.neverasDashboard.rolesPermitidos}
-                            fileName={DOWNLOAD_CONFIGS.neverasDashboard.fileName}
-                            method="POST"
-                            body={downloadBody}
-                        />
-                    </div>
-                }
                 page={page}
                 pageSize={pageSize}
                 totalRegistros={totalRegistros}

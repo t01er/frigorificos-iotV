@@ -1,2 +1,160 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/sora";
 @import "tailwindcss";
-@config "../tailwind.config.js"
+@config "../tailwind.config.js";
+
+/* Paleta Labotec. Los tokens "nx-*" generan utilidades: bg-nx-purple, text-nx-text-2, border-nx-line... */
+@theme {
+  /* Tipografías: Geist para interfaz y datos, Sora para títulos y KPIs */
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Sora Variable", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-nx-purple: #7b2ff2;
+  --color-nx-blue: #2f6bff;
+  --color-nx-violet: #a35cff;
+  --color-nx-cyan: #22c7ee;
+  --color-nx-ink: #17123a;
+  /** Fondo oscuro fijo para tarjetas con texto blanco (no se invierte en modo oscuro) */
+  --color-nx-ink-card: #17123a;
+
+  --color-nx-shell: #f4f5fb;
+  --color-nx-bg: #e6e8f4;
+  --color-nx-surface: #ffffff;
+  --color-nx-surface-2: #f1f1f8;
+  --color-nx-line: #e3e3ef;
+
+  --color-nx-text: #17123a;
+  --color-nx-text-2: #5f5d7a;
+  --color-nx-text-3: #9593ae;
+
+  --color-nx-ok-soft: #ddf5ea;
+  --color-nx-ok: #16a36a;
+  --color-nx-ok-ink: #0f8a58;
+  --color-nx-warn-soft: #fdf0d5;
+  --color-nx-warn: #e8a21a;
+  --color-nx-warn-ink: #b26b00;
+  --color-nx-err-soft: #fde6e7;
+  --color-nx-err: #e5484d;
+  --color-nx-err-ink: #c9302c;
+  --color-nx-info-soft: #e1eaff;
+  --color-nx-info: #2f6bff;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Modo oscuro: se activa con la clase "dark" en <html>.
+   Neutros casi negros + acento azul (sin morado). */
+.dark {
+  --color-nx-purple: #146ef5;
+  --color-nx-blue: #146ef5;
+  --color-nx-violet: #5b9dff;
+  --color-nx-cyan: #4cc3f0;
+  --color-nx-ink: #ffffff;
+  --color-nx-ink-card: #151515;
+  --color-nx-shell: #0a0a0a;
+  --color-nx-bg: #050505;
+  --color-nx-surface: #101010;
+  --color-nx-surface-2: #1a1a1a;
+  --color-nx-line: #262626;
+  --color-nx-text: #f5f5f5;
+  --color-nx-text-2: #a8a8a8;
+  --color-nx-text-3: #6e6e6e;
+  --color-nx-ok-soft: #0d2a1e;
+  --color-nx-warn-soft: #2e2208;
+  --color-nx-err-soft: #331415;
+  --color-nx-info-soft: #0f2548;
+  --nx-grad-from: #146ef5;
+  --nx-grad-to: #146ef5;
+}
+
+/* Degradado de marca: 225° morado → azul (en oscuro es azul sólido) */
+@utility bg-nx-gradient {
+  background-image: linear-gradient(225deg, var(--nx-grad-from, #7b2ff2), var(--nx-grad-to, #2f6bff));
+}
+
+/* Luces de fondo (solo modo oscuro): manchas azules orgánicas, pequeñas y tenues a los costados */
+.nx-glow {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.dark .nx-glow {
+  display: block;
+}
+.nx-glow::before,
+.nx-glow::after {
+  content: "";
+  position: absolute;
+  filter: blur(70px);
+  will-change: border-radius, transform;
+}
+.nx-glow::before {
+  top: 18%;
+  left: -6%;
+  width: 22%;
+  height: 34%;
+  border-radius: 62% 38% 55% 45% / 45% 60% 40% 55%;
+  background: linear-gradient(135deg, rgba(20, 110, 245, 0.32), rgba(91, 157, 255, 0.08));
+  animation: nx-blob-a 18s ease-in-out infinite;
+}
+.nx-glow::after {
+  bottom: 8%;
+  right: -7%;
+  width: 20%;
+  height: 40%;
+  border-radius: 40% 60% 35% 65% / 62% 38% 62% 38%;
+  background: linear-gradient(315deg, rgba(20, 110, 245, 0.28), rgba(76, 195, 240, 0.06));
+  animation: nx-blob-b 22s ease-in-out infinite;
+}
+@keyframes nx-blob-a {
+  0%, 100% { border-radius: 62% 38% 55% 45% / 45% 60% 40% 55%; transform: translateY(0); }
+  50% { border-radius: 40% 60% 42% 58% / 58% 42% 58% 42%; transform: translateY(6%); }
+}
+@keyframes nx-blob-b {
+  0%, 100% { border-radius: 40% 60% 35% 65% / 62% 38% 62% 38%; transform: translateY(0); }
+  50% { border-radius: 58% 42% 62% 38% / 40% 58% 42% 60%; transform: translateY(-6%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nx-glow::before,
+  .nx-glow::after { animation: none; }
+}
+
+/* Efecto cristal en modo oscuro: superficies translúcidas con desenfoque para que la luz se transparente */
+.dark .bg-nx-surface {
+  background-color: rgba(16, 16, 16, 0.62);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+/* Login: panel izquierdo de marca y tarjeta del formulario */
+.nx-login-hero {
+  background-image: linear-gradient(145deg, #3f1ac0 0%, #5a2de3 45%, #2f6bff 100%);
+}
+.dark .nx-login-hero {
+  background-image: linear-gradient(145deg, #050505 0%, #0b1a33 55%, #0d3a7a 100%);
+  border: 1px solid var(--color-nx-line);
+}
+.dark .nx-login-card {
+  padding: 2rem 1.5rem;
+  border-radius: 1.75rem;
+  border: 1px solid var(--color-nx-line);
+  background-color: rgba(16, 16, 16, 0.55);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
