@@ -5,7 +5,9 @@
 const EN_VERCEL = typeof window !== "undefined" && window.location.hostname.endsWith(".vercel.app");
 const viaProxy = (url: string) =>
   EN_VERCEL
-    ? url.replace("https://phuyu-iot.com", "/proxy/phuyu").replace("https://entel-iot.pe", "/proxy/entel")
+    ? url
+        .replace("https://phuyu-iot.com", `${window.location.origin}/proxy/phuyu`)
+        .replace("https://entel-iot.pe", `${window.location.origin}/proxy/entel`)
     : url;
 
 export const API_ENTEL_CORE = viaProxy(import.meta.env.VITE_API_ENTEL_CORE || "https://entel-iot.pe/API_ENTEL");
