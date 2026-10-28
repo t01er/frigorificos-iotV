@@ -1,4 +1,5 @@
 import PageContainer from "../../../layouts/PageContainer";
+import { POWERBI_URL } from "../../../config/env";
 
 
 export default function Users() {
@@ -6,7 +7,7 @@ export default function Users() {
         <PageContainer>
             <div style={{ width: "100%", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
                 <iframe
-                    src={import.meta.env.VITE_POWERBI_URL}
+                    src={POWERBI_URL}
                     title="dashboardPB"
                     style={{ width: "100%", height: "100%", border: "none" }}
                     allowFullScreen

@@ -23,7 +23,6 @@ import {
   Logout3,
   Magnifier,
   Restart,
-  Routing2,
   ServerMinimalistic,
   StreetsMapPoint,
 } from "@solar-icons/react";
