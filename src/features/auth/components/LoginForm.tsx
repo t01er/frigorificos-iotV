@@ -1,20 +1,9 @@
-import { useState, useRef, useEffect, type ComponentType, type Ref } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../../auth/services/authApi";
 import { Input, Button } from "@heroui/react";
 import { UserRounded, Lock, Eye, EyeClosed } from "@solar-icons/react";
-import ReCAPTCHA from "react-google-recaptcha";
-import { RECAPTCHA_TOKEN } from "../../../config/env";
-
-const ReCAPTCHAComponent = ReCAPTCHA as unknown as ComponentType<{
-  sitekey: string;
-  onChange: (token: string | null) => void;
-  ref?: Ref<unknown>;
-}>;
-
-const CAPTCHA_WIDTH = 304;
-const CAPTCHA_HEIGHT = 78;
-const CAPTCHA_MAX_SCALE = 0.88;
+// reCAPTCHA desactivado para la demo en Vercel (el dominio no está registrado en la clave).
 
 export default function LoginForm() {
   const [login, { isLoading, error }] = useLoginMutation();
@@ -24,34 +13,8 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const recaptchaRef = useRef<unknown>(null);
-
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-
-  const captchaBoxRef = useRef<HTMLDivElement>(null);
-  const [captchaScale, setCaptchaScale] = useState(1);
-
-  useEffect(() => {
-    const el = captchaBoxRef.current;
-    if (!el) return;
-    const update = () => setCaptchaScale(Math.min(CAPTCHA_MAX_SCALE, el.clientWidth / CAPTCHA_WIDTH));
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const handleCaptchaChange = (token: string | null) => {
-    setCaptchaToken(token);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!captchaToken) {
-      console.log("Completa el captcha");
-      return;
-    }
 
     try {
       const userData = await login({
@@ -112,27 +75,6 @@ export default function LoginForm() {
             </button>
           }
         />
-
-        <div
-          ref={captchaBoxRef}
-          className="w-full flex justify-center"
-          style={{ height: CAPTCHA_HEIGHT * captchaScale }}
-        >
-          <div
-            style={{
-              width: CAPTCHA_WIDTH,
-              flexShrink: 0,
-              transform: `scale(${captchaScale})`,
-              transformOrigin: "top center",
-            }}
-          >
-            <ReCAPTCHAComponent
-              ref={recaptchaRef}
-              sitekey={RECAPTCHA_TOKEN}
-              onChange={handleCaptchaChange}
-            />
-          </div>
-        </div>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -142,7 +84,7 @@ export default function LoginForm() {
           size="md"
           className="w-full bg-nx-gradient text-white font-medium h-11 text-sm"
           isLoading={isLoading}
-          isDisabled={isLoading || !captchaToken}
+          isDisabled={isLoading}
         >
           {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
         </Button>
