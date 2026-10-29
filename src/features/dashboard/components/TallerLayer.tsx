@@ -70,7 +70,7 @@ export default function TallerLayer({ map, talleres, onSelect }: Props) {
         source: "talleres",
         layout: {
           "icon-image": ["get", "icon"],
-          "icon-size": 0.06,
+          "icon-size": 0.85,
           "icon-allow-overlap": true,
         },
       },
